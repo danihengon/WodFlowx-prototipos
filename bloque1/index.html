@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WodFlowX — Prototipo: Login</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="device-desktop">
+  <div class="proto-banner">PROTOTIPO DE DISEÑO — sin conexión al backend, solo para revisión visual</div>
+  <div class="device-toggle">
+    <button class="toggle-btn active" data-device="desktop">Escritorio</button>
+    <button class="toggle-btn" data-device="mobile">Móvil</button>
+  </div>
+
+  <main class="login-screen">
+    <div class="login-card">
+      <div class="brand">
+        <span class="brand-mark">WFX</span>
+        <h1>WodFlowX</h1>
+      </div>
+      <p class="login-subtitle">Accede a tu cuenta para continuar</p>
+      <form class="login-form" onsubmit="return false;">
+        <label for="username">Usuario o correo electrónico</label>
+        <input id="username" type="text" placeholder="ana.trainer" />
+        <label for="password">Contraseña</label>
+        <input id="password" type="password" placeholder="••••••••" />
+        <a class="login-submit" href="navegacion.html">Iniciar sesión</a>
+        <p class="login-note">
+          Este botón es solo de maqueta: te lleva a la pantalla de navegación general de ejemplo.
+          No hay autenticación real ni conexión con el backend.
+        </p>
+      </form>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

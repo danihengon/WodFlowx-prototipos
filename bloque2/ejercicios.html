@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WodFlowX — Prototipo bloque 2: Ejercicios</title>
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="catalog.css" />
+</head>
+<body>
+  <div class="proto-banner">PROTOTIPO DE DISEÑO — datos ficticios, sin conexión real al backend. Ninguna acción se guarda de verdad.</div>
+
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="brand-mini">
+        <span class="brand-mark">WFX</span>
+        WodFlowX
+      </div>
+      <div class="user-chip desktop-only">
+        Entrenador Demo (Entrenador)
+        <button class="logout-link" type="button" disabled>Cerrar sesión</button>
+      </div>
+      <button class="menu-toggle mobile-only" aria-label="Abrir menú" aria-expanded="false">☰ Menú</button>
+    </header>
+
+    <nav class="mobile-menu">
+      <a class="mobile-menu-item" href="inicio.html">Inicio</a>
+      <span class="mobile-menu-item disabled">Entrenamientos (próximamente)</span>
+      <a class="mobile-menu-item active" href="ejercicios.html">Ejercicios</a>
+      <span class="mobile-menu-item disabled">Usuarios (próximamente)</span>
+      <span class="mobile-menu-item logout">Cerrar sesión</span>
+    </nav>
+
+    <div class="app-body">
+      <nav class="app-sidenav">
+        <a class="nav-item" href="inicio.html">Inicio</a>
+        <span class="nav-item disabled">Entrenamientos (próximamente)</span>
+        <a class="nav-item active" href="ejercicios.html">Ejercicios</a>
+        <span class="nav-item disabled">Usuarios (próximamente)</span>
+      </nav>
+
+      <main class="app-content">
+        <div class="page-header">
+          <h1>Ejercicios</h1>
+          <p>Catálogo de ejercicios disponible para montar entrenamientos. Solo tú (entrenador) puedes verlo y gestionarlo.</p>
+        </div>
+
+        <!-- Avisos simulados: sin conexión / sesión caducada / sin permiso -->
+        <div class="state-banner offline" id="bannerOffline">
+          Sin conexión con el servidor. No se han podido cargar los cambios.
+          <div><button class="btn btn-secondary" type="button" data-demo-retry>Reintentar</button></div>
+        </div>
+        <div class="state-banner unauthorized" id="bannerSession">
+          Tu sesión ha caducado. Vuelve a iniciar sesión para continuar.
+          <div><button class="btn btn-secondary" type="button" data-demo-retry>Simular nuevo inicio de sesión</button></div>
+        </div>
+        <div class="state-banner unauthorized" id="bannerForbidden">
+          No tienes permiso para gestionar el catálogo de ejercicios (solo el entrenador puede).
+        </div>
+
+        <div class="catalog-toolbar">
+          <input class="search-input" type="search" id="searchInput" placeholder="Buscar ejercicio por nombre…" />
+          <button class="btn btn-primary" type="button" id="btnNuevo">+ Añadir ejercicio</button>
+        </div>
+
+        <div class="status-tabs" id="statusTabs">
+          <button class="status-tab active" type="button" data-status="active">Activos</button>
+          <button class="status-tab" type="button" data-status="inactive">Inactivos</button>
+          <button class="status-tab" type="button" data-status="all">Todos</button>
+        </div>
+
+        <div id="loadingState" style="display:none;">
+          <div class="exercise-list">
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+          </div>
+        </div>
+
+        <div class="exercise-list" id="exerciseList"></div>
+
+        <div class="empty-state" id="emptyState" style="display:none;">
+          <strong id="emptyTitle">No hay ejercicios</strong>
+          <span id="emptyText">Todavía no se ha creado ningún ejercicio.</span>
+        </div>
+
+        <!-- Panel de simulación: solo del prototipo, no existe en la app real -->
+        <div class="demo-panel">
+          <h3>Panel de pruebas del prototipo (no es parte del diseño real)</h3>
+          <p>Botones para ver cómo se comporta la pantalla en cada situación, sin tener que provocarla de verdad.</p>
+          <div class="demo-actions">
+            <button class="btn btn-secondary" type="button" data-demo="empty">Simular: catálogo vacío</button>
+            <button class="btn btn-secondary" type="button" data-demo="no-results">Simular: sin resultados de búsqueda</button>
+            <button class="btn btn-secondary" type="button" data-demo="save-error">Simular: error al guardar</button>
+            <button class="btn btn-secondary" type="button" data-demo="offline">Simular: sin conexión</button>
+            <button class="btn btn-secondary" type="button" data-demo="session">Simular: sesión caducada</button>
+            <button class="btn btn-secondary" type="button" data-demo="forbidden">Simular: acceso sin permiso (MEMBER)</button>
+            <button class="btn btn-secondary" type="button" data-demo="reset">Restablecer datos de ejemplo</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal de alta / edición -->
+  <div class="modal-overlay" id="formModalOverlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="formModalTitle">
+      <div class="modal-header">
+        <h2 id="formModalTitle">Nuevo ejercicio</h2>
+        <button class="modal-close" type="button" data-close-modal aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="exerciseForm" novalidate>
+          <label for="fieldName">Nombre</label>
+          <input type="text" id="fieldName" maxlength="255" />
+          <p class="field-error" id="errorName" style="display:none;"></p>
+
+          <label for="fieldDescription">Descripción (opcional)</label>
+          <textarea id="fieldDescription" rows="3"></textarea>
+
+          <label for="fieldImage">Imagen (URL, opcional)</label>
+          <input type="text" id="fieldImage" placeholder="https://…" />
+          <p class="form-note">No existe todavía un selector de archivo: el backend solo guarda una ruta/URL de texto, no permite subir una imagen.</p>
+
+          <p class="modal-caution" id="editingCaution" style="display:none;"></p>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" id="btnReactivarDesdeForm" style="display:none;">Reactivar</button>
+        <button class="btn btn-secondary" type="button" data-close-modal>Cancelar</button>
+        <button class="btn btn-primary" type="button" id="btnGuardar">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmación de desactivación -->
+  <div class="modal-overlay" id="confirmModalOverlay">
+    <div class="modal modal-small" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
+      <div class="modal-header">
+        <h2 id="confirmModalTitle">Desactivar ejercicio</h2>
+        <button class="modal-close" type="button" data-close-modal aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmModalText"></p>
+        <p class="modal-caution">Si este ejercicio se usa en algún entrenamiento ya creado, seguirá apareciendo en él. Solo dejará de poder añadirse a entrenamientos nuevos. Podrás reactivarlo cuando quieras.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-close-modal>Cancelar</button>
+        <button class="btn btn-outline-danger" type="button" id="btnConfirmarDesactivar">Desactivar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toastStack"></div>
+
+  <script src="nav.js"></script>
+  <script src="catalog.js"></script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WodFlowX — Prototipo: Mis entrenamientos</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="device-desktop">
+  <div class="proto-banner">PROTOTIPO DE DISEÑO — sin conexión al backend, solo para revisión visual. Entrenamiento de ejemplo, no es un dato real.</div>
+  <div class="device-toggle">
+    <button class="toggle-btn active" data-device="desktop">Escritorio</button>
+    <button class="toggle-btn" data-device="mobile">Móvil</button>
+  </div>
+
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="brand-mini">
+        <span class="brand-mark">WFX</span>
+        WodFlowX
+      </div>
+      <div class="user-chip desktop-only">
+        Marta (Socio)
+        <a class="logout-link" href="index.html">Cerrar sesión</a>
+      </div>
+      <button class="menu-toggle mobile-only" aria-label="Abrir menú" aria-expanded="false">☰ Menú</button>
+    </header>
+
+    <nav class="mobile-menu">
+      <a class="mobile-menu-item" href="navegacion.html">Inicio</a>
+      <a class="mobile-menu-item active" href="mis-entrenamientos.html">Mis entrenamientos</a>
+      <a class="mobile-menu-item logout" href="index.html">Cerrar sesión</a>
+    </nav>
+
+    <div class="app-body">
+      <nav class="app-sidenav">
+        <a class="nav-item" href="navegacion.html">Inicio</a>
+        <a class="nav-item active" href="mis-entrenamientos.html">Mis entrenamientos</a>
+        <a class="nav-item disabled" href="#" onclick="return false;">Progreso (próximamente)</a>
+        <a class="nav-item disabled" href="#" onclick="return false;">Perfil (próximamente)</a>
+      </nav>
+
+      <main class="app-content">
+        <div class="workout-header">
+          <h1 class="workout-title">Fuerza y acondicionamiento — ejemplo</h1>
+          <div class="workout-meta">Hoy · Asignado por tu entrenador</div>
+        </div>
+
+        <div class="view-tabs">
+          <button class="view-tab active" data-view="list">Lista</button>
+          <button class="view-tab" data-view="diagram">Diagrama</button>
+        </div>
+
+        <!-- ===== Vista Lista ===== -->
+        <div class="view-panel" id="view-list">
+          <!-- Grupo 1: calentamiento, una sola ronda -->
+          <section class="group-card">
+            <div class="group-header">
+              <span class="group-title">Calentamiento</span>
+              <span class="group-badge">1 ronda</span>
+            </div>
+
+            <div class="exercise-row">
+              <span class="exercise-name">Jumping jacks</span>
+              <span class="badge badge-time">30 s</span>
+            </div>
+            <div class="exercise-row">
+              <span class="exercise-name">Sentadilla con peso corporal</span>
+              <span class="badge badge-reps">15 reps</span>
+            </div>
+            <div class="exercise-row">
+              <span class="exercise-name">Plancha abdominal</span>
+              <span class="badge badge-time">30 s</span>
+            </div>
+          </section>
+
+          <div class="transition-row">↓ Descanso 20 s</div>
+
+          <!-- Grupo 2: bloque principal, tres rondas -->
+          <section class="group-card">
+            <div class="group-header">
+              <span class="group-title">Bloque principal</span>
+              <span class="group-badge">3 rondas</span>
+            </div>
+
+            <div class="round-block">
+              <div class="round-label">Ronda 1 de 3</div>
+              <div class="exercise-row">
+                <span class="exercise-name">Burpees</span>
+                <span class="badge badge-reps">12 reps</span>
+              </div>
+              <div class="exercise-row">
+                <span>
+                  <span class="exercise-name">Remo con mancuerna</span>
+                  <span class="exercise-note">Cada brazo</span>
+                </span>
+                <span class="badge badge-reps">10 reps</span>
+              </div>
+              <div class="exercise-row">
+                <span>
+                  <span class="exercise-name">Plancha lateral</span>
+                  <span class="exercise-note">Cada lado</span>
+                </span>
+                <span class="badge badge-time">20 s</span>
+              </div>
+              <div class="transition-row">↓ Descanso 30 s</div>
+            </div>
+
+            <div class="round-block">
+              <div class="round-label">Ronda 2 de 3</div>
+              <div class="exercise-row">
+                <span class="exercise-name">Burpees</span>
+                <span class="badge badge-reps">12 reps</span>
+              </div>
+              <div class="exercise-row">
+                <span>
+                  <span class="exercise-name">Remo con mancuerna</span>
+                  <span class="exercise-note">Cada brazo</span>
+                </span>
+                <span class="badge badge-reps">10 reps</span>
+              </div>
+              <div class="exercise-row">
+                <span>
+                  <span class="exercise-name">Plancha lateral</span>
+                  <span class="exercise-note">Cada lado</span>
+                </span>
+                <span class="badge badge-time">20 s</span>
+              </div>
+              <div class="transition-row">↓ Descanso 30 s</div>
+            </div>
+
+            <div class="round-block">
+              <div class="round-label">Ronda 3 de 3</div>
+              <div class="exercise-row">
+                <span class="exercise-name">Burpees</span>
+                <span class="badge badge-reps">12 reps</span>
+              </div>
+              <div class="exercise-row">
+                <span>
+                  <span class="exercise-name">Remo con mancuerna</span>
+                  <span class="exercise-note">Cada brazo</span>
+                </span>
+                <span class="badge badge-reps">10 reps</span>
+              </div>
+              <div class="exercise-row">
+                <span>
+                  <span class="exercise-name">Plancha lateral</span>
+                  <span class="exercise-note">Cada lado</span>
+                </span>
+                <span class="badge badge-time">20 s</span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- ===== Vista Diagrama (boceto de solo lectura, estilo React Flow) ===== -->
+        <div class="view-panel" id="view-diagram" hidden>
+          <p class="diagram-note">
+            Solo lectura. Haz zoom con los botones o la rueda del ratón, y desplázate arrastrando el lienzo.
+          </p>
+
+          <div class="diagram-viewport">
+            <div class="diagram-toolbar">
+              <button class="zoom-btn" data-zoom="out" aria-label="Alejar">−</button>
+              <button class="zoom-btn" data-zoom="in" aria-label="Acercar">+</button>
+              <button class="zoom-btn zoom-reset" data-zoom="fit">Ver todo</button>
+            </div>
+
+            <div class="diagram-canvas">
+              <svg class="diagram-edges" viewBox="0 0 700 460">
+                <defs>
+                  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M0,0 L10,5 L0,10 z" fill="#6b7280" />
+                  </marker>
+                </defs>
+
+                <!-- Dentro del Grupo 1 -->
+                <line x1="135" y1="120" x2="135" y2="165" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)" />
+                <line x1="135" y1="235" x2="135" y2="280" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)" />
+
+                <!-- Transición Grupo 1 -> Grupo 2 -->
+                <path d="M230,315 C 275,315 280,85 320,85" fill="none" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)" />
+                <text x="246" y="200" font-size="11" fill="#6b7280">Descanso 20 s</text>
+
+                <!-- Dentro del Grupo 2 -->
+                <line x1="425" y1="120" x2="425" y2="165" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)" />
+                <line x1="425" y1="243" x2="425" y2="290" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)" />
+
+                <!-- Bucle de repetición de rondas -->
+                <path d="M530,329 C 630,329 630,85 530,85" fill="none" stroke="#1f8a70" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#arrow)" />
+                <text x="542" y="150" font-size="11" fill="#156b57">Repetir × 3</text>
+                <text x="542" y="166" font-size="11" fill="#156b57">Descanso 30 s</text>
+              </svg>
+
+              <div class="diagram-node group-node" style="left:20px; top:20px; width:230px; height:400px;">
+                <div class="diagram-group-label">Calentamiento · 1 ronda</div>
+              </div>
+              <div class="diagram-node group-node" style="left:300px; top:20px; width:250px; height:400px;">
+                <div class="diagram-group-label">Bloque principal · × 3 rondas</div>
+              </div>
+
+              <div class="diagram-node diagram-exercise-node" style="left:40px; top:50px; width:190px; height:70px;">
+                <span class="exercise-name">Jumping jacks</span>
+                <span class="badge badge-time">30 s</span>
+              </div>
+              <div class="diagram-node diagram-exercise-node" style="left:40px; top:165px; width:190px; height:70px;">
+                <span class="exercise-name">Sentadilla con peso corporal</span>
+                <span class="badge badge-reps">15 reps</span>
+              </div>
+              <div class="diagram-node diagram-exercise-node" style="left:40px; top:280px; width:190px; height:70px;">
+                <span class="exercise-name">Plancha abdominal</span>
+                <span class="badge badge-time">30 s</span>
+              </div>
+
+              <div class="diagram-node diagram-exercise-node" style="left:320px; top:50px; width:210px; height:70px;">
+                <span class="exercise-name">Burpees</span>
+                <span class="badge badge-reps">12 reps</span>
+              </div>
+              <div class="diagram-node diagram-exercise-node" style="left:320px; top:165px; width:210px; height:78px;">
+                <span class="exercise-name">Remo con mancuerna</span>
+                <span class="exercise-note">Cada brazo</span>
+                <span class="badge badge-reps">10 reps</span>
+              </div>
+              <div class="diagram-node diagram-exercise-node" style="left:320px; top:290px; width:210px; height:78px;">
+                <span class="exercise-name">Plancha lateral</span>
+                <span class="exercise-note">Cada lado</span>
+                <span class="badge badge-time">20 s</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

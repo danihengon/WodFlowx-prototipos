@@ -1,0 +1,260 @@
+/* Copia literal de la identidad visual ya implementada en
+   frontend/src/styles/app.css (bloque 1, aprobado). No es una reinvención:
+   mismos tokens, mismas clases de cabecera/menú/navegación, para que este
+   prototipo se sienta parte de WodFlowX. Las clases nuevas del catálogo
+   viven aparte, en catalog.css. */
+
+:root {
+  --color-bg: #f5f7fa;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f0f2f5;
+  --color-border: #e2e5ea;
+  --color-text: #1f2430;
+  --color-text-muted: #6b7280;
+  --color-primary: #1f8a70;
+  --color-primary-dark: #156b57;
+  --color-danger: #dc2626;
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+a,
+button {
+  color: inherit;
+  font-family: inherit;
+}
+
+/* Banner de prototipo (misma convención que docs/frontend/prototipos/bloque1/) */
+.proto-banner {
+  background: #1f2430;
+  color: #f5f7fa;
+  text-align: center;
+  font-size: 0.8rem;
+  padding: 6px 12px;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- Estructura general (navegación) — igual que el bloque 1 real ---------- */
+.app-shell {
+  background: var(--color-surface);
+  min-height: 100vh;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.app-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.brand-mini {
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand-mark {
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-mini .brand-mark {
+  width: 26px;
+  height: 26px;
+  font-size: 0.65rem;
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.logout-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-danger);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.menu-toggle {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* En la app React real este menú ni siquiera se monta cuando está cerrado;
+   en este prototipo estático sí existe en el DOM, así que necesita su
+   propio estado "cerrado" por defecto (la app real no lo necesita). */
+.mobile-menu {
+  display: none;
+  flex-direction: column;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.mobile-menu.open {
+  display: flex;
+}
+
+.mobile-menu-item {
+  padding: 14px 20px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-text);
+  border-top: 1px solid var(--color-border);
+  text-align: left;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  cursor: pointer;
+  text-decoration: none;
+  display: block;
+  width: 100%;
+}
+
+.mobile-menu-item.active {
+  color: var(--color-primary-dark);
+  background: var(--color-surface-alt);
+}
+
+.mobile-menu-item.disabled {
+  color: #c7cbd3;
+  cursor: default;
+}
+
+.mobile-menu-item.logout {
+  color: var(--color-danger);
+}
+
+.mobile-only {
+  display: none;
+}
+
+.desktop-only {
+  display: flex;
+}
+
+.app-body {
+  display: flex;
+}
+
+.app-sidenav {
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--color-border);
+  padding: 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav-item {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  display: block;
+}
+
+.nav-item.active {
+  background: var(--color-surface-alt);
+  color: var(--color-primary-dark);
+  font-weight: 600;
+}
+
+.nav-item.disabled {
+  color: #c7cbd3;
+  cursor: default;
+}
+
+.app-content {
+  flex: 1;
+  padding: 24px;
+}
+
+.page-header h1 {
+  margin: 0 0 4px;
+  font-size: 1.4rem;
+}
+
+.page-header p {
+  color: var(--color-text-muted);
+  margin: 0 0 20px;
+  max-width: 480px;
+}
+
+.shortcut-card {
+  display: block;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px;
+  max-width: 320px;
+  text-decoration: none;
+}
+
+.shortcut-card strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.shortcut-card span {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+/* La adaptación a móvil depende únicamente del ancho real de la pantalla
+   (misma decisión que el bloque 1 real: sin ningún selector de maqueta). */
+@media (max-width: 640px) {
+  .app-sidenav,
+  .desktop-only {
+    display: none;
+  }
+
+  .mobile-only {
+    display: inline-flex;
+  }
+
+  .app-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+}

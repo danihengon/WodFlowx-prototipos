@@ -1,0 +1,606 @@
+:root {
+  --color-bg: #f5f7fa;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f0f2f5;
+  --color-border: #e2e5ea;
+  --color-text: #1f2430;
+  --color-text-muted: #6b7280;
+  --color-primary: #1f8a70;
+  --color-primary-dark: #156b57;
+  --color-reps: #2563eb;
+  --color-reps-bg: #eaf0fe;
+  --color-time: #c2680a;
+  --color-time-bg: #fcefe0;
+  --color-danger: #dc2626;
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Banner de prototipo, presente en las tres pantallas */
+.proto-banner {
+  background: #1f2430;
+  color: #f5f7fa;
+  text-align: center;
+  font-size: 0.8rem;
+  padding: 6px 12px;
+  letter-spacing: 0.02em;
+}
+
+/* Selector Escritorio / Móvil */
+.device-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  background: var(--color-surface-alt);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.toggle-btn {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.toggle-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+/* ---------- Pantalla de login ---------- */
+.login-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+  padding: 32px 16px;
+}
+
+.login-card {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 32px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.brand-mark {
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand h1 {
+  font-size: 1.3rem;
+  margin: 0;
+}
+
+.login-subtitle {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin: 4px 0 24px;
+}
+
+.login-form label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 14px 0 6px;
+}
+
+.login-form input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: var(--color-surface-alt);
+}
+
+.login-submit {
+  display: block;
+  text-align: center;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+  padding: 11px;
+  border-radius: 8px;
+  margin-top: 22px;
+}
+
+.login-submit:hover {
+  background: var(--color-primary-dark);
+}
+
+.login-note {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  margin-top: 14px;
+  line-height: 1.4;
+}
+
+/* ---------- Estructura general (navegación) ---------- */
+.app-shell {
+  background: var(--color-surface);
+  min-height: 80vh;
+}
+
+body.device-mobile .app-shell {
+  max-width: 390px;
+  margin: 24px auto;
+  border: 1px solid var(--color-border);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+}
+
+body.device-desktop .app-shell {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.app-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.brand-mini {
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand-mini .brand-mark {
+  width: 26px;
+  height: 26px;
+  font-size: 0.65rem;
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.logout-link {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+/* Botón "☰ Menú" de móvil y su panel desplegable */
+.menu-toggle {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.mobile-menu {
+  display: none;
+  flex-direction: column;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.mobile-menu.open {
+  display: flex;
+}
+
+.mobile-menu-item {
+  padding: 14px 20px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-text);
+  border-top: 1px solid var(--color-border);
+}
+
+.mobile-menu-item.active {
+  color: var(--color-primary-dark);
+  background: var(--color-surface-alt);
+}
+
+.mobile-menu-item.logout {
+  color: var(--color-danger);
+}
+
+/* Visibilidad según modo: por defecto (escritorio) solo se ve lo de escritorio */
+.mobile-only {
+  display: none;
+}
+
+.desktop-only {
+  display: flex;
+}
+
+body.device-mobile .desktop-only,
+body.device-mobile .app-sidenav {
+  display: none;
+}
+
+body.device-mobile .mobile-only {
+  display: inline-flex;
+}
+
+/* En móvil, la cabecera permanece visible al desplazarse */
+body.device-mobile .app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.app-body {
+  display: flex;
+}
+
+.app-sidenav {
+  width: 200px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--color-border);
+  padding: 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav-item {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.nav-item.active {
+  background: var(--color-surface-alt);
+  color: var(--color-primary-dark);
+  font-weight: 600;
+}
+
+.nav-item.disabled {
+  color: #c7cbd3;
+  cursor: default;
+}
+
+.app-content {
+  flex: 1;
+  padding: 24px;
+}
+
+.page-header h1 {
+  margin: 0 0 4px;
+  font-size: 1.4rem;
+}
+
+.page-header p {
+  color: var(--color-text-muted);
+  margin: 0 0 20px;
+}
+
+.shortcut-card {
+  display: block;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px;
+  max-width: 320px;
+}
+
+.shortcut-card strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.shortcut-card span {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+/* ---------- Mis entrenamientos ---------- */
+.workout-header {
+  margin-bottom: 4px;
+}
+
+.workout-title {
+  font-size: 1.3rem;
+  margin: 0 0 2px;
+}
+
+.workout-meta {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+/* Pestañas Lista / Diagrama, justo debajo del título */
+.view-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0 18px;
+}
+
+.view-tab {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.view-tab.active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+.group-card {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.group-title {
+  font-weight: 700;
+  font-size: 1.02rem;
+}
+
+.group-badge {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.round-block {
+  margin-bottom: 10px;
+}
+
+.round-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 10px 0 6px;
+}
+
+.exercise-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  background: var(--color-surface);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+}
+
+.exercise-name {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.exercise-note {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.badge {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.badge-reps {
+  color: var(--color-reps);
+  background: var(--color-reps-bg);
+}
+
+.badge-time {
+  color: var(--color-time);
+  background: var(--color-time-bg);
+}
+
+.transition-row {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  padding: 4px 0 10px;
+}
+
+/* ---------- Vista Diagrama (boceto del futuro editor React Flow) ---------- */
+.diagram-note {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  margin: 0 0 10px;
+}
+
+.diagram-viewport {
+  position: relative;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface-alt);
+  overflow: hidden;
+  height: 60vh;
+  min-height: 260px;
+  max-height: 460px;
+  touch-action: none;
+}
+
+.diagram-toolbar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+  z-index: 6;
+}
+
+.zoom-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.zoom-btn.zoom-reset {
+  width: auto;
+  font-size: 0.72rem;
+  padding: 0 10px;
+}
+
+.diagram-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 700px;
+  height: 460px;
+  transform-origin: 0 0;
+  cursor: grab;
+}
+
+.diagram-canvas.dragging {
+  cursor: grabbing;
+}
+
+.diagram-edges {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 700px;
+  height: 460px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.diagram-node {
+  position: absolute;
+}
+
+.diagram-node.group-node {
+  background: #eef1f5;
+  border: 1.5px dashed #b9c0cc;
+  border-radius: 12px;
+  z-index: 1;
+}
+
+.diagram-group-label {
+  position: absolute;
+  top: 8px;
+  left: 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.diagram-exercise-node {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  z-index: 3;
+}
+
+.diagram-exercise-node .exercise-name {
+  font-size: 0.8rem;
+}
+
+.diagram-exercise-node .exercise-note {
+  font-size: 0.68rem;
+  margin-bottom: 2px;
+}
+
+.diagram-exercise-node .badge {
+  margin-top: 4px;
+  align-self: flex-start;
+}
+
+@media (max-width: 640px) {
+  .app-sidenav,
+  .desktop-only {
+    display: none;
+  }
+
+  .mobile-only {
+    display: inline-flex;
+  }
+
+  .app-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+
+  body.device-desktop .app-shell,
+  body.device-mobile .app-shell {
+    max-width: 480px;
+    margin: 12px auto;
+  }
+}
