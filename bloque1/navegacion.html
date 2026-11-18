@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WodFlowX — Prototipo: Navegación general</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="device-desktop">
+  <div class="proto-banner">PROTOTIPO DE DISEÑO — sin conexión al backend, solo para revisión visual</div>
+  <div class="device-toggle">
+    <button class="toggle-btn active" data-device="desktop">Escritorio</button>
+    <button class="toggle-btn" data-device="mobile">Móvil</button>
+  </div>
+
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="brand-mini">
+        <span class="brand-mark">WFX</span>
+        WodFlowX
+      </div>
+      <div class="user-chip desktop-only">
+        Marta (Socio)
+        <a class="logout-link" href="index.html">Cerrar sesión</a>
+      </div>
+      <button class="menu-toggle mobile-only" aria-label="Abrir menú" aria-expanded="false">☰ Menú</button>
+    </header>
+
+    <nav class="mobile-menu">
+      <a class="mobile-menu-item active" href="navegacion.html">Inicio</a>
+      <a class="mobile-menu-item" href="mis-entrenamientos.html">Mis entrenamientos</a>
+      <a class="mobile-menu-item logout" href="index.html">Cerrar sesión</a>
+    </nav>
+
+    <div class="app-body">
+      <nav class="app-sidenav">
+        <a class="nav-item active" href="navegacion.html">Inicio</a>
+        <a class="nav-item" href="mis-entrenamientos.html">Mis entrenamientos</a>
+        <a class="nav-item disabled" href="#" onclick="return false;">Progreso (próximamente)</a>
+        <a class="nav-item disabled" href="#" onclick="return false;">Perfil (próximamente)</a>
+      </nav>
+
+      <main class="app-content">
+        <div class="page-header">
+          <h1>Hola, Marta</h1>
+          <p>Boceto de la pantalla principal tras iniciar sesión. El contenido real de esta pantalla se definirá más adelante.</p>
+        </div>
+
+        <a class="shortcut-card" href="mis-entrenamientos.html">
+          <strong>Mis entrenamientos</strong>
+          <span>Ver el entrenamiento asignado para hoy</span>
+        </a>
+      </main>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
