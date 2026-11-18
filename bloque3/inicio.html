@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WodFlowX — Prototipo bloque 3: inicio TRAINER</title>
+  <link rel="stylesheet" href="shared.css" />
+</head>
+<body>
+  <div class="proto-banner">PROTOTIPO DE DISEÑO — datos ficticios, sin conexión real al backend</div>
+
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="brand-mini">
+        <span class="brand-mark">WFX</span>
+        WodFlowX
+      </div>
+      <div class="user-chip desktop-only">
+        Entrenador Demo (Entrenador)
+        <button class="logout-link" type="button" disabled>Cerrar sesión</button>
+      </div>
+      <button class="menu-toggle mobile-only" aria-label="Abrir menú" aria-expanded="false">☰ Menú</button>
+    </header>
+
+    <nav class="mobile-menu">
+      <a class="mobile-menu-item active" href="inicio.html">Inicio</a>
+      <a class="mobile-menu-item" href="entrenamientos.html">Entrenamientos</a>
+      <span class="mobile-menu-item disabled">Ejercicios (ya implementado — bloque 2, no incluido aquí)</span>
+      <span class="mobile-menu-item disabled">Usuarios (próximamente)</span>
+      <span class="mobile-menu-item logout">Cerrar sesión</span>
+    </nav>
+
+    <div class="app-body">
+      <nav class="app-sidenav">
+        <a class="nav-item active" href="inicio.html">Inicio</a>
+        <a class="nav-item" href="entrenamientos.html">Entrenamientos</a>
+        <span class="nav-item disabled">Ejercicios</span>
+        <span class="nav-item disabled">Usuarios (próximamente)</span>
+      </nav>
+
+      <main class="app-content">
+        <div class="page-header">
+          <h1>Hola, Entrenador Demo</h1>
+          <p>
+            Boceto de inicio del entrenador, igual que el ya implementado en los bloques 1 y 2.
+            Desde aquí se accede ahora también a la gestión básica de entrenamientos.
+          </p>
+        </div>
+
+        <a class="shortcut-card" href="entrenamientos.html">
+          <strong>Entrenamientos</strong>
+          <span>Consultar, crear, editar, desactivar y reactivar entrenamientos (datos generales)</span>
+        </a>
+      </main>
+    </div>
+  </div>
+
+  <script src="nav.js"></script>
+</body>
+</html>

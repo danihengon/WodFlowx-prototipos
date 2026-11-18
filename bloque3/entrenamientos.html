@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WodFlowX — Prototipo bloque 3: Entrenamientos</title>
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="workouts.css" />
+</head>
+<body>
+  <div class="proto-banner">PROTOTIPO DE DISEÑO — datos ficticios, sin conexión real al backend. Ninguna acción se guarda de verdad.</div>
+
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="brand-mini">
+        <span class="brand-mark">WFX</span>
+        WodFlowX
+      </div>
+      <div class="user-chip desktop-only">
+        Entrenador Demo (Entrenador)
+        <button class="logout-link" type="button" disabled>Cerrar sesión</button>
+      </div>
+      <button class="menu-toggle mobile-only" aria-label="Abrir menú" aria-expanded="false">☰ Menú</button>
+    </header>
+
+    <nav class="mobile-menu">
+      <a class="mobile-menu-item" href="inicio.html">Inicio</a>
+      <a class="mobile-menu-item active" href="entrenamientos.html">Entrenamientos</a>
+      <span class="mobile-menu-item disabled">Ejercicios (ya implementado — bloque 2, no incluido aquí)</span>
+      <span class="mobile-menu-item disabled">Usuarios (próximamente)</span>
+      <span class="mobile-menu-item logout">Cerrar sesión</span>
+    </nav>
+
+    <div class="app-body">
+      <nav class="app-sidenav">
+        <a class="nav-item" href="inicio.html">Inicio</a>
+        <a class="nav-item active" href="entrenamientos.html">Entrenamientos</a>
+        <span class="nav-item disabled">Ejercicios</span>
+        <span class="nav-item disabled">Usuarios (próximamente)</span>
+      </nav>
+
+      <main class="app-content">
+        <div class="page-header">
+          <h1>Entrenamientos</h1>
+          <p>Datos generales de los entrenamientos: clases del día y entrenamientos personales. Solo tú (entrenador) puedes verlos y gestionarlos.</p>
+        </div>
+
+        <!-- Avisos simulados: sin conexión / sesión caducada / sin permiso -->
+        <div class="state-banner offline" id="bannerOffline">
+          Sin conexión con el servidor. No se han podido cargar los cambios.
+          <div><button class="btn btn-secondary" type="button" data-demo-retry>Reintentar</button></div>
+        </div>
+        <div class="state-banner unauthorized" id="bannerSession">
+          Tu sesión ha caducado. Vuelve a iniciar sesión para continuar.
+          <div><button class="btn btn-secondary" type="button" data-demo-retry>Simular nuevo inicio de sesión</button></div>
+        </div>
+        <div class="state-banner unauthorized" id="bannerForbidden">
+          No tienes permiso para gestionar entrenamientos (solo el entrenador puede).
+        </div>
+
+        <div class="catalog-toolbar">
+          <input class="search-input" type="search" id="searchInput" placeholder="Buscar por título (filtro local)…" />
+          <button class="btn btn-primary" type="button" id="btnNuevo">+ Nuevo entrenamiento</button>
+        </div>
+        <p class="search-hint">
+          Esta búsqueda es solo local, sobre los entrenamientos ya cargados: el backend real no ofrece
+          búsqueda por título en <code>GET /api/workouts</code>.
+        </p>
+
+        <div class="filter-row" id="typeTabs" role="group" aria-label="Filtrar por tipo">
+          <span class="filter-row-label">Tipo:</span>
+          <button class="status-tab active" type="button" data-type="all">Todos</button>
+          <button class="status-tab" type="button" data-type="DAILY_CLASS">Clases del día</button>
+          <button class="status-tab" type="button" data-type="PERSONAL">Personales</button>
+        </div>
+
+        <div class="filter-row" id="statusTabs" role="group" aria-label="Filtrar por estado">
+          <span class="filter-row-label">Estado:</span>
+          <button class="status-tab active" type="button" data-status="active">Activos</button>
+          <button class="status-tab" type="button" data-status="inactive">Inactivos</button>
+          <button class="status-tab" type="button" data-status="all">Todos</button>
+        </div>
+
+        <div id="loadingState" style="display:none;">
+          <div class="workout-list">
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+          </div>
+        </div>
+
+        <div class="workout-list" id="workoutList"></div>
+
+        <div class="empty-state" id="emptyState" style="display:none;">
+          <strong id="emptyTitle">No hay entrenamientos</strong>
+          <span id="emptyText">Todavía no se ha creado ningún entrenamiento.</span>
+        </div>
+
+        <!-- Panel de simulación: solo del prototipo, no existe en la app real -->
+        <div class="demo-panel">
+          <h3>Panel de pruebas del prototipo (no es parte del diseño real)</h3>
+          <p>Botones para ver cómo se comporta la pantalla en cada situación, sin tener que provocarla de verdad.</p>
+          <div class="demo-actions">
+            <button class="btn btn-secondary" type="button" data-demo="empty">Simular: sin entrenamientos</button>
+            <button class="btn btn-secondary" type="button" data-demo="no-results">Simular: sin resultados de la búsqueda local</button>
+            <button class="btn btn-secondary" type="button" data-demo="save-error">Simular: error al guardar</button>
+            <button class="btn btn-secondary" type="button" data-demo="offline">Simular: sin conexión</button>
+            <button class="btn btn-secondary" type="button" data-demo="session">Simular: sesión caducada</button>
+            <button class="btn btn-secondary" type="button" data-demo="forbidden">Simular: acceso sin permiso (MEMBER)</button>
+            <button class="btn btn-secondary" type="button" data-demo="reset">Restablecer datos de ejemplo</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal de alta / edición -->
+  <div class="modal-overlay" id="formModalOverlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="formModalTitle">
+      <div class="modal-header">
+        <h2 id="formModalTitle">Nuevo entrenamiento</h2>
+        <button class="modal-close" type="button" data-close-modal aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="workoutForm" novalidate>
+          <!-- Alta: selector real. Edición: texto fijo (el tipo no se puede cambiar). -->
+          <label for="fieldType" id="labelType">Tipo de entrenamiento</label>
+          <select id="fieldType">
+            <option value="DAILY_CLASS">Clase del día</option>
+            <option value="PERSONAL">Personal</option>
+          </select>
+          <div class="field-static" id="fieldTypeStatic" style="display:none;"></div>
+          <p class="field-hint" id="typeEditHint" style="display:none;">
+            El tipo de un entrenamiento no se puede cambiar una vez creado.
+          </p>
+
+          <label for="fieldTitle">Título</label>
+          <input type="text" id="fieldTitle" maxlength="255" />
+          <p class="field-error" id="errorTitle" style="display:none;"></p>
+
+          <label for="fieldDescription">Descripción (opcional)</label>
+          <textarea id="fieldDescription" rows="3"></textarea>
+
+          <div id="dateFieldWrapper">
+            <label for="fieldDate" id="labelDate">Fecha</label>
+            <input type="date" id="fieldDate" />
+            <p class="field-hint" id="dateHint">Obligatoria para una clase del día.</p>
+            <p class="field-error" id="errorDate" style="display:none;"></p>
+          </div>
+
+          <p class="modal-caution" id="editingCaution" style="display:none;"></p>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" id="btnReactivarDesdeForm" style="display:none;">Reactivar</button>
+        <button class="btn btn-secondary" type="button" data-close-modal>Cancelar</button>
+        <button class="btn btn-primary" type="button" id="btnGuardar">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmación de desactivación -->
+  <div class="modal-overlay" id="confirmModalOverlay">
+    <div class="modal modal-small" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
+      <div class="modal-header">
+        <h2 id="confirmModalTitle">Desactivar entrenamiento</h2>
+        <button class="modal-close" type="button" data-close-modal aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmModalText"></p>
+        <p class="modal-caution">
+          Dejará de estar activo, pero no se eliminará: conserva su estructura y las asignaciones que ya
+          tenga. Podrás reactivarlo cuando quieras.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-close-modal>Cancelar</button>
+        <button class="btn btn-outline-danger" type="button" id="btnConfirmarDesactivar">Desactivar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toastStack"></div>
+
+  <script src="nav.js"></script>
+  <script src="workouts.js"></script>
+</body>
+</html>
