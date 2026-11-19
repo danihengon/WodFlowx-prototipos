@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WodFlowX — Prototipo bloque 4: punto de entrada al editor</title>
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="editor.css" />
+</head>
+<body>
+  <div class="proto-banner">PROTOTIPO DE DISEÑO — simula únicamente la navegación hacia el editor del bloque 4.1. No es el listado real de entrenamientos (ver docs/frontend/prototipos/bloque3/ para ese prototipo) ni modifica la aplicación React real, donde este botón sigue deshabilitado.</div>
+
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="brand-mini">
+        <span class="brand-mark">WFX</span>
+        WodFlowX
+      </div>
+      <div class="user-chip desktop-only">
+        Entrenador Demo (Entrenador)
+        <button class="logout-link" type="button" disabled>Cerrar sesión</button>
+      </div>
+      <button class="menu-toggle mobile-only" aria-label="Abrir menú" aria-expanded="false">☰ Menú</button>
+    </header>
+
+    <nav class="mobile-menu">
+      <a class="mobile-menu-item" href="../../bloque1/index.html">Inicio</a>
+      <a class="mobile-menu-item active" href="entrenamientos.html">Entrenamientos</a>
+      <span class="mobile-menu-item disabled">Ejercicios (ya implementado — bloque 2)</span>
+      <span class="mobile-menu-item disabled">Usuarios (próximamente)</span>
+      <span class="mobile-menu-item logout">Cerrar sesión</span>
+    </nav>
+
+    <div class="app-body">
+      <nav class="app-sidenav">
+        <a class="nav-item" href="../../bloque1/index.html">Inicio</a>
+        <a class="nav-item active" href="entrenamientos.html">Entrenamientos</a>
+        <span class="nav-item disabled">Ejercicios</span>
+        <span class="nav-item disabled">Usuarios (próximamente)</span>
+      </nav>
+
+      <main class="app-content">
+        <div class="page-header">
+          <h1>Entrenamientos</h1>
+          <p>Vista simplificada, solo para este prototipo: simula cómo se llegaría al editor visual (bloque 4.1) desde la pantalla real del bloque 3.</p>
+        </div>
+
+        <p class="stub-note">
+          En la aplicación React real, el botón "Editar estructura" de cada fila sigue deshabilitado (ver <code>frontend/README.md</code>, bloque 3). Aquí, dentro de este prototipo independiente, está habilitado únicamente para el entrenamiento de ejemplo, para poder simular la navegación hacia el editor.
+        </p>
+
+        <div class="stub-list">
+          <div class="stub-row">
+            <div class="stub-row-main">
+              <div class="stub-row-title">Fuerza y acondicionamiento — clase del día</div>
+              <div class="stub-row-meta">
+                <span class="badge badge-daily">Clase del día</span>
+                <span class="badge badge-active">Activo</span>
+                <span>2026-11-23</span>
+              </div>
+            </div>
+            <div class="stub-row-actions">
+              <button class="btn btn-secondary" type="button" disabled>Editar datos</button>
+              <a class="btn btn-primary" href="index.html">Editar estructura</a>
+            </div>
+          </div>
+
+          <div class="stub-row">
+            <div class="stub-row-main">
+              <div class="stub-row-title">Entrenamiento personal — Semana 3</div>
+              <div class="stub-row-meta">
+                <span class="badge badge-readonly">Personal</span>
+                <span class="badge badge-active">Activo</span>
+              </div>
+            </div>
+            <div class="stub-row-actions">
+              <button class="btn btn-secondary" type="button" disabled>Editar datos</button>
+              <button class="btn btn-secondary" type="button" disabled title="Fuera del alcance de este prototipo: solo el primer entrenamiento tiene datos de ejemplo cargados">Editar estructura</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="nav.js"></script>
+</body>
+</html>

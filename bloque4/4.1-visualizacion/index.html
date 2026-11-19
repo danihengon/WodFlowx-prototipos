@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WodFlowX — Prototipo bloque 4.1: Editor visual (solo lectura)</title>
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="editor.css" />
+</head>
+<body>
+  <div class="proto-banner">PROTOTIPO DE DISEÑO — HTML/CSS/JS local, datos ficticios, sin React Flow, sin backend. Nada se guarda. Subbloque 4.1: solo lectura.</div>
+
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="brand-mini">
+        <span class="brand-mark">WFX</span>
+        WodFlowX
+      </div>
+      <div class="user-chip desktop-only">
+        Entrenador Demo (Entrenador)
+        <button class="logout-link" type="button" disabled>Cerrar sesión</button>
+      </div>
+      <button class="menu-toggle mobile-only" aria-label="Abrir menú" aria-expanded="false">☰ Menú</button>
+    </header>
+
+    <nav class="mobile-menu">
+      <a class="mobile-menu-item" href="../../bloque1/index.html">Inicio</a>
+      <a class="mobile-menu-item" href="entrenamientos.html">Entrenamientos</a>
+      <span class="mobile-menu-item disabled">Ejercicios (ya implementado — bloque 2)</span>
+      <span class="mobile-menu-item disabled">Usuarios (próximamente)</span>
+      <span class="mobile-menu-item logout">Cerrar sesión</span>
+    </nav>
+
+    <div class="app-body">
+      <nav class="app-sidenav">
+        <a class="nav-item" href="../../bloque1/index.html">Inicio</a>
+        <a class="nav-item" href="entrenamientos.html">Entrenamientos</a>
+        <span class="nav-item disabled">Ejercicios</span>
+        <span class="nav-item disabled">Usuarios (próximamente)</span>
+      </nav>
+
+      <main class="app-content">
+        <p><a href="entrenamientos.html">&larr; Volver a Entrenamientos</a></p>
+
+        <div class="editor-header">
+          <div class="editor-header-title">
+            <h1 id="workoutTitle">Entrenamiento</h1>
+            <div class="editor-header-meta" id="workoutMeta"></div>
+          </div>
+        </div>
+
+        <div class="compare-panel">
+          <h2>Opciones de comparación (solo del prototipo, no son parte del diseño final)</h2>
+          <div class="compare-row">
+            <div class="compare-group">
+              <span class="compare-label">Vista:</span>
+              <div class="seg-control" id="segView">
+                <button type="button" data-value="diagram" class="active">Diagrama</button>
+                <button type="button" data-value="list">Lista</button>
+              </div>
+            </div>
+            <div class="compare-group">
+              <span class="compare-label">Orden visual:</span>
+              <div class="seg-control" id="segOrder">
+                <button type="button" data-value="A" class="active">Sin flechas (A)</button>
+                <button type="button" data-value="B">Con flechas (B)</button>
+              </div>
+            </div>
+            <div class="compare-group">
+              <span class="compare-label">Detalle del elemento:</span>
+              <div class="seg-control" id="segDetail">
+                <button type="button" data-value="panel" class="active">Panel lateral</button>
+                <button type="button" data-value="modal">Modal</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="editor-toolbar">
+          <div class="toolbar-group">
+            <button type="button" class="btn-icon" id="btnZoomOut" aria-label="Alejar">−</button>
+            <span class="toolbar-zoom-level" id="zoomLevel">100%</span>
+            <button type="button" class="btn-icon" id="btnZoomIn" aria-label="Acercar">+</button>
+          </div>
+          <button type="button" class="btn btn-secondary" id="btnFitView">Ver todo</button>
+          <div class="toolbar-spacer"></div>
+          <span class="badge badge-readonly">Solo lectura (4.1)</span>
+        </div>
+
+        <div class="editor-main">
+          <div class="editor-stage">
+            <div id="viewDiagram">
+              <div class="canvas-viewport" id="canvasViewport">
+                <div class="canvas-world" id="canvasWorld">
+                  <svg class="canvas-svg-layer" id="canvasSvg" width="100" height="100"></svg>
+                  <div class="canvas-tree" id="canvasTree"></div>
+                </div>
+                <span class="canvas-hint">Arrastra para desplazar · rueda del ratón para zoom · pulsa un elemento para ver su detalle</span>
+              </div>
+            </div>
+            <div id="viewList" style="display:none;">
+              <div class="hierarchy-list" id="hierarchyList"></div>
+            </div>
+          </div>
+
+          <aside class="detail-panel" id="detailPanel">
+            <div id="detailPanelBody">
+              <p class="detail-panel-placeholder">Selecciona una sección, un bloque/subbloque o un ejercicio del diagrama o de la lista para ver aquí su información (de solo lectura en este subbloque).</p>
+            </div>
+          </aside>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal de detalle (alternativa B de selección; también se usa siempre en móvil) -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <h2 id="modalTitle">Detalle</h2>
+        <button class="modal-close" type="button" id="modalCloseBtn" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script src="nav.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

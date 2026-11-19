@@ -1,0 +1,613 @@
+/* Estilos propios del prototipo del editor visual (subbloque 4.1).
+   Reutiliza los tokens de color/espaciado de shared.css. No es una
+   implementación de React Flow: el lienzo es HTML + SVG + JavaScript local,
+   con un layout calculado de forma sencilla (apilado por "position",
+   indentado por nivel de anidamiento). */
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.editor-header-title h1 {
+  margin: 0 0 2px;
+  font-size: 1.25rem;
+}
+
+.editor-header-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.badge {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.badge-daily { color: #8a5a00; background: #fdf0d8; }
+.badge-active { color: var(--color-primary-dark); background: #e3f3ee; }
+.badge-readonly { color: #6b7280; background: #e9eaed; }
+.badge-dynamic { color: #7c3aed; background: #ede6fb; }
+
+/* ---------- Opciones de comparación (solo del prototipo) ---------- */
+.compare-panel {
+  border: 1px dashed #c7cbd3;
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  background: var(--color-surface);
+}
+
+.compare-panel h2 {
+  font-size: 0.78rem;
+  margin: 0 0 8px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.compare-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font-size: 0.82rem;
+}
+
+.compare-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.compare-group span.compare-label {
+  color: var(--color-text-muted);
+  margin-right: 2px;
+}
+
+.seg-control {
+  display: inline-flex;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.seg-control button {
+  border: none;
+  background: var(--color-surface-alt);
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+
+.seg-control button.active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* ---------- Barra de herramientas del lienzo ---------- */
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.toolbar-group {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 4px;
+  background: var(--color-surface-alt);
+}
+
+.toolbar-zoom-level {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  min-width: 42px;
+  text-align: center;
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+/* ---------- Layout principal: lienzo + panel lateral ---------- */
+.editor-main {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.editor-stage {
+  flex: 1;
+  min-width: 0;
+}
+
+.canvas-viewport {
+  position: relative;
+  height: 480px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface-alt);
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+
+.canvas-viewport.panning {
+  cursor: grabbing;
+}
+
+.canvas-world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  padding: 24px;
+}
+
+.canvas-svg-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.canvas-tree {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.canvas-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 4px 10px;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+/* ---------- Secciones (carriles) ---------- */
+.section-lane {
+  border: 1px dashed #c7cbd3;
+  border-radius: var(--radius);
+  padding: 10px 12px 14px;
+  background: rgba(255, 255, 255, 0.55);
+  width: 620px;
+}
+
+.section-lane-header {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.section-lane-header .section-order {
+  color: var(--color-primary-dark);
+}
+
+/* ---------- Tarjetas de nodo ---------- */
+.node {
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.node-group {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+
+.node-group.depth-1 { border-left: 4px solid var(--color-primary); }
+.node-group.depth-2 { border-left: 4px solid #8a5a00; margin-left: 18px; background: #fffdf7; }
+.node-group.depth-3 { border-left: 4px solid #1d4ed8; margin-left: 18px; background: #f7f9ff; }
+.node-group.depth-4 { border-left: 4px solid #7c3aed; margin-left: 18px; background: #fbf7ff; }
+
+.node.selected {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.node-group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.node-expand {
+  border: none;
+  background: var(--color-surface-alt);
+  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  font-size: 0.72rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.node-kind-label {
+  font-size: 0.66rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.node-name {
+  font-weight: 700;
+  font-size: 0.88rem;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.node-children {
+  margin-top: 6px;
+  padding-left: 8px;
+}
+
+.node-collapsed-hint {
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
+  margin: 4px 0 0 30px;
+  font-style: italic;
+}
+
+.node-exercise {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  padding: 7px 10px;
+  margin-bottom: 6px;
+  margin-left: 2px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.node-exercise .node-name {
+  font-weight: 600;
+  font-size: 0.84rem;
+}
+
+.node-exercise-summary {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* Flechas de orden visual (alternativa B) y de transiciones reales — se
+   dibujan con SVG sobre .canvas-svg-layer, estilos aplicados vía atributos
+   en app.js (stroke/dasharray), documentados aquí solo como referencia:
+   orden visual = gris fino; transición real = naranja discontinua con
+   etiqueta de descanso/duración. */
+.arrow-label {
+  font-size: 10px;
+  fill: #92620a;
+  font-weight: 600;
+}
+
+/* ---------- Vista jerárquica (lista) ---------- */
+.hierarchy-list {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  padding: 10px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.hlist-section {
+  margin-bottom: 10px;
+}
+
+.hlist-section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 4px 6px;
+}
+
+.hlist-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.86rem;
+}
+
+.hlist-row:hover {
+  background: var(--color-surface-alt);
+}
+
+.hlist-row.selected {
+  background: #e3f3ee;
+  outline: 1px solid var(--color-primary);
+}
+
+.hlist-row .node-kind-label {
+  flex-shrink: 0;
+}
+
+.hlist-row .hlist-name {
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hlist-row .hlist-summary {
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.hlist-toggle {
+  border: none;
+  background: none;
+  width: 18px;
+  flex-shrink: 0;
+  cursor: pointer;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.hlist-children {
+  padding-left: 20px;
+}
+
+/* ---------- Panel lateral de detalle (alternativa A de selección) ---------- */
+.detail-panel {
+  width: 300px;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  padding: 16px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.detail-panel-placeholder {
+  color: var(--color-text-muted);
+  font-size: 0.86rem;
+}
+
+.detail-title {
+  font-size: 1.02rem;
+  font-weight: 700;
+  margin: 0 0 2px;
+}
+
+.detail-kind {
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 10px;
+}
+
+.detail-row {
+  margin-bottom: 10px;
+}
+
+.detail-row-label {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 2px;
+}
+
+.detail-row-value {
+  font-size: 0.86rem;
+}
+
+.detail-row-value ul {
+  margin: 2px 0 0;
+  padding-left: 18px;
+}
+
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.detail-readonly-note {
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
+  background: #fff7e6;
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+/* ---------- Modal de detalle (alternativa B de selección) ---------- */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 18, 26, 0.45);
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 420px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px 4px;
+}
+
+.modal-header h2 {
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.modal-body {
+  padding: 8px 20px 16px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 20px 18px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Lista de entrenamientos (página de entrada simulada) ---------- */
+.stub-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stub-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  flex-wrap: wrap;
+}
+
+.stub-row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.stub-row-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.stub-row-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.stub-row-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.stub-note {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin: -4px 0 14px;
+}
+
+/* ---------- Panel inferior deslizante (móvil) ---------- */
+.mobile-sheet-overlay {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .editor-main {
+    flex-direction: column;
+  }
+
+  .detail-panel {
+    display: none;
+  }
+
+  .canvas-viewport {
+    height: 62vh;
+  }
+
+  .section-lane {
+    width: 94vw;
+    max-width: 480px;
+  }
+
+  .compare-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* En móvil, tanto "panel" como "modal" se presentan como una hoja que
+     sube desde abajo — no hay sitio para una columna lateral persistente. */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal {
+    max-width: none;
+    width: 100%;
+    border-radius: var(--radius) var(--radius) 0 0;
+    max-height: 80vh;
+  }
+}
