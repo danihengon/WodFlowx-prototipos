@@ -577,6 +577,14 @@
 @media (max-width: 760px) {
   .editor-main {
     flex-direction: column;
+    /* La regla base pone align-items: flex-start (pensada para la fila de
+       escritorio, donde solo afecta a la altura). Con flex-direction:
+       column el eje cruzado pasa a ser la anchura: sin "stretch" aquí,
+       .editor-stage se reduce a su contenido y, como .canvas-viewport no
+       tiene ningún hijo en flujo (sus dos hijos son position: absolute),
+       colapsa a un ancho casi nulo — el lienzo queda recortado por
+       overflow: hidden y aparece en blanco. */
+    align-items: stretch;
   }
 
   .detail-panel {
@@ -584,6 +592,7 @@
   }
 
   .canvas-viewport {
+    width: 100%;
     height: 62vh;
   }
 
