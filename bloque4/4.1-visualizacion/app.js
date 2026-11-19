@@ -742,38 +742,137 @@
       }
     });
 
+    // ---- Táctil: un dedo arrastra, dos dedos pellizcan para hacer zoom ----
+    // touchMode distingue el gesto en curso ('pan' | 'pinch' | null) para
+    // poder reiniciarlo sin salto si el número de dedos cambia a mitad de
+    // gesto (p. ej. se levanta un dedo durante un pellizco).
+    var touchMode = null;
+    var touchStartX = 0;
+    var touchStartY = 0;
+    var touchOrigX = 0;
+    var touchOrigY = 0;
+    var pinchStartDist = 0;
+    var pinchStartScale = 1;
+    var pinchStartPanX = 0;
+    var pinchStartPanY = 0;
+    var pinchMidX = 0;
+    var pinchMidY = 0;
+
+    function touchDistance(t1, t2) {
+      var dx = t2.clientX - t1.clientX;
+      var dy = t2.clientY - t1.clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function viewportMidpoint(t1, t2) {
+      var rect = viewport.getBoundingClientRect();
+      return {
+        x: (t1.clientX + t2.clientX) / 2 - rect.left,
+        y: (t1.clientY + t2.clientY) / 2 - rect.top,
+      };
+    }
+
+    function beginPan(touch) {
+      touchMode = "pan";
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+      touchOrigX = panX;
+      touchOrigY = panY;
+    }
+
+    function beginPinch(t1, t2) {
+      touchMode = "pinch";
+      pinchStartDist = touchDistance(t1, t2);
+      pinchStartScale = scale;
+      pinchStartPanX = panX;
+      pinchStartPanY = panY;
+      var mid = viewportMidpoint(t1, t2);
+      pinchMidX = mid.x;
+      pinchMidY = mid.y;
+    }
+
     viewport.addEventListener(
       "touchstart",
       function (ev) {
-        if (ev.target.closest(".node") || ev.touches.length !== 1) {
-          return;
+        if (ev.touches.length === 1) {
+          // "node": un toque que empieza sobre un nodo nunca debe
+          // arrastrar el lienzo (interferiría con pulsar para
+          // seleccionar) — se distingue de null para que el touchmove de
+          // abajo sepa que este toque está deliberadamente suprimido, no
+          // simplemente "sin iniciar todavía".
+          touchMode = ev.target.closest(".node") ? "node" : null;
+          if (touchMode === null) {
+            beginPan(ev.touches[0]);
+          }
+        } else if (ev.touches.length === 2) {
+          beginPinch(ev.touches[0], ev.touches[1]);
+        } else {
+          touchMode = null;
         }
-        isPanning = true;
-        startX = ev.touches[0].clientX;
-        startY = ev.touches[0].clientY;
-        origX = panX;
-        origY = panY;
       },
       { passive: true }
     );
+
     viewport.addEventListener(
       "touchmove",
       function (ev) {
-        if (!isPanning || ev.touches.length !== 1) {
-          return;
+        if (ev.touches.length === 2) {
+          // Dos dedos: pellizco. Si veníamos de un arrastre de un solo
+          // dedo, de un toque sobre un nodo o de nada, se reinicia aquí
+          // mismo como un pellizco nuevo con el punto medio y la
+          // distancia actuales — dos dedos siempre significan zoom, sin
+          // ambigüedad, y así no se arrastra el estado de otro gesto ni
+          // se produce un salto.
+          if (touchMode !== "pinch") {
+            beginPinch(ev.touches[0], ev.touches[1]);
+            return;
+          }
+          ev.preventDefault();
+          var newDist = touchDistance(ev.touches[0], ev.touches[1]);
+          var ratio = newDist / pinchStartDist;
+          var newScale = Math.max(0.4, Math.min(2, pinchStartScale * ratio));
+          // Zoom centrado en el punto medio capturado al iniciar el
+          // pellizco: el punto del lienzo que había debajo de ese punto
+          // medio se mantiene fijo en pantalla mientras cambia la escala.
+          var worldX = (pinchMidX - pinchStartPanX) / pinchStartScale;
+          var worldY = (pinchMidY - pinchStartPanY) / pinchStartScale;
+          scale = newScale;
+          panX = pinchMidX - worldX * newScale;
+          panY = pinchMidY - worldY * newScale;
+          applyTransform();
+        } else if (ev.touches.length === 1) {
+          if (touchMode === "pan") {
+            ev.preventDefault();
+            panX = touchOrigX + (ev.touches[0].clientX - touchStartX);
+            panY = touchOrigY + (ev.touches[0].clientY - touchStartY);
+            applyTransform();
+          } else if (touchMode === "pinch") {
+            // Transición de dos dedos a uno (se soltó otro durante un
+            // pellizco): pasa a arrastre desde la posición actual, sin
+            // salto.
+            beginPan(ev.touches[0]);
+          }
+          // Si touchMode es "node" (o null porque nunca llegó a iniciar
+          // nada), este dedo nunca debe empezar a arrastrar: se ignora.
         }
-        panX = origX + (ev.touches[0].clientX - startX);
-        panY = origY + (ev.touches[0].clientY - startY);
-        applyTransform();
       },
-      { passive: true }
+      { passive: false }
     );
-    viewport.addEventListener("touchend", function () {
-      if (isPanning) {
-        isPanning = false;
+
+    function endTouch(ev) {
+      if (ev.touches.length === 0) {
+        touchMode = null;
         requestAnimationFrame(drawArrows);
+      } else if (ev.touches.length === 1) {
+        // Quedó un dedo tras soltar otro durante un pellizco: pasa a
+        // arrastre desde la posición actual, sin salto.
+        beginPan(ev.touches[0]);
+      } else if (ev.touches.length >= 2) {
+        beginPinch(ev.touches[0], ev.touches[1]);
       }
-    });
+    }
+    viewport.addEventListener("touchend", endTouch);
+    viewport.addEventListener("touchcancel", endTouch);
 
     viewport.addEventListener(
       "wheel",
