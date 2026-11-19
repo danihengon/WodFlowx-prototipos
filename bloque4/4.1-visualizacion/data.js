@@ -60,6 +60,13 @@ var WORKOUT_TREE = {
 
   sections: [
     {
+      // Tres grupos principales consecutivos, para comprobar cómo se
+      // representan varios bloques dentro de una misma sección: su orden,
+      // las flechas de secuencia entre ellos, y una transición real entre
+      // los dos primeros (el backend sí lo permite: dos grupos principales
+      // de la misma sección comparten "section_id" como contenedor —
+      // TransitionService.requireSameContainer, verificado en el código
+      // real antes de añadir esta transición ficticia).
       sectionId: 1,
       position: 1,
       name: "Calentamiento",
@@ -70,20 +77,55 @@ var WORKOUT_TREE = {
           group: grp(
             11,
             1001,
-            "Movilidad general",
-            "Dos pasadas suaves, sin carga, para preparar la sesión.",
+            "Movilidad articular",
+            "Pasada suave, sin carga, para preparar la sesión.",
             [
               contentItem(1, exOcc(2001, 2001, "Rotaciones de hombros", "15 repeticiones", [
                 { label: "Repeticiones", value: "15" },
               ])),
-              contentItem(2, exOcc(2002, 2002, "Sentadilla sin carga", "12 repeticiones", [
-                { label: "Repeticiones", value: "12" },
-              ])),
-              contentItem(3, exOcc(2003, 2003, "Plancha", "30 segundos", [
-                { label: "Duración", value: "30 s" },
+              contentItem(2, exOcc(2010, 2010, "Movilidad de cadera", "10 repeticiones por lado", [
+                { label: "Repeticiones", value: "10 por lado" },
               ])),
             ],
             { dynamicName: "Circuito", parameters: [{ label: "Rondas", value: "2" }] }
+          ),
+        },
+        {
+          sectionGroupId: 104,
+          position: 2,
+          group: grp(
+            17,
+            1007,
+            "Activación",
+            "",
+            [
+              contentItem(1, exOcc(2002, 2002, "Sentadillas", "12 repeticiones", [
+                { label: "Repeticiones", value: "12" },
+              ])),
+              contentItem(2, exOcc(2003, 2003, "Plancha", "30 segundos", [
+                { label: "Duración", value: "30 s" },
+              ])),
+            ],
+            null
+          ),
+        },
+        {
+          sectionGroupId: 105,
+          position: 3,
+          group: grp(
+            18,
+            1008,
+            "Preparación cardiovascular",
+            "",
+            [
+              contentItem(1, exOcc(2013, 2013, "Jumping jacks", "20 repeticiones", [
+                { label: "Repeticiones", value: "20" },
+              ])),
+              contentItem(2, exOcc(2014, 2014, "Carrera suave", "3 minutos", [
+                { label: "Duración", value: "3 min" },
+              ])),
+            ],
+            null
           ),
         },
       ],
@@ -194,6 +236,20 @@ var WORKOUT_TREE = {
   // p. ej. no hay transición entre "Sprint corto" y "Carrera final" aunque
   // sean visualmente consecutivos, porque están en contenedores distintos).
   transitions: [
+    {
+      // Transición real entre dos GRUPOS PRINCIPALES de la misma sección
+      // (Movilidad articular -> Activación, ambos de "Calentamiento").
+      // Válida porque comparten section_id como contenedor (ver nota más
+      // arriba); el tercer grupo (Preparación cardiovascular) queda unido
+      // al segundo solo por orden visual, sin ninguna transición real, a
+      // propósito, para poder comparar ambos casos en el mismo lienzo.
+      transitionId: 9004,
+      originFlowElementId: 1001,
+      destinationFlowElementId: 1007,
+      description: "Cambio de bloque",
+      duration: { value: 20, unit: "segundos" },
+      activity: null,
+    },
     {
       transitionId: 9001,
       originFlowElementId: 2002,

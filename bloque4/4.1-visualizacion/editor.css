@@ -169,13 +169,30 @@
   left: 0;
   pointer-events: none;
   overflow: visible;
+  /* .canvas-world tiene un transform aplicado por JS (zoom/paneo), lo que
+     lo convierte en contexto de apilamiento. Dentro de él, este SVG
+     aparece antes que .canvas-tree en el DOM: sin z-index, ambos tienen
+     z-index:auto y se pintan en orden de DOM, así que el SVG quedaba
+     detrás de las tarjetas de nodo (de fondo opaco) y las flechas
+     aparecían casi totalmente ocultas. z-index lo sube por encima. */
+  z-index: 2;
 }
 
 .canvas-tree {
   position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 22px;
+}
+
+/* Hueco algo mayor entre hermanos cuando el modo "con flechas" está
+   activo, para que el conector y su etiqueta quepan con claridad en el
+   espacio entre tarjetas, sin solaparse con el texto. Solo afecta al
+   espaciado, nunca a la estructura ni a los datos. */
+.canvas-tree.arrows-on .node-group,
+.canvas-tree.arrows-on .node-exercise {
+  margin-bottom: 20px;
 }
 
 .canvas-hint {
@@ -315,6 +332,12 @@
   font-size: 10px;
   fill: #92620a;
   font-weight: 600;
+}
+
+.arrow-label-bg {
+  fill: #fff7e6;
+  stroke: #f3d9a4;
+  stroke-width: 1;
 }
 
 /* ---------- Vista jerárquica (lista) ---------- */

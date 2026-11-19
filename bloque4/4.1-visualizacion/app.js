@@ -20,6 +20,7 @@
 
   var dataIndex = {}; // key -> { type, data, depth }
   var flowNameIndex = {}; // flowElementId -> nombre legible
+  var flowTypeIndex = {}; // flowElementId -> 'group' | 'exercise'
   var nodeElements = {}; // key -> elemento DOM del diagrama actual
   var flowIndex = {}; // flowElementId -> elemento DOM del diagrama actual
   var orderContainers = []; // listas de flowElementId en orden, por contenedor
@@ -54,11 +55,13 @@
   function indexExercise(e) {
     dataIndex[exKey(e)] = { type: "exercise", data: e };
     flowNameIndex[e.flowElementId] = e.exerciseName;
+    flowTypeIndex[e.flowElementId] = "exercise";
   }
 
   function indexGroup(g, depth) {
     dataIndex[groupKey(g)] = { type: "group", data: g, depth: depth };
     flowNameIndex[g.flowElementId] = g.name;
+    flowTypeIndex[g.flowElementId] = "group";
     g.content.slice().forEach(function (ci) {
       if (ci.kind === "group") {
         indexGroup(ci.item, depth + 1);
@@ -438,6 +441,11 @@
   }
 
   // ---------- Flechas (SVG) ----------
+  // Dos familias claramente distintas, para no confundir nunca una con
+  // otra: "order-*" son conexiones puramente visuales (el orden dentro de
+  // un mismo contenedor, deducido de "position"; no implican ninguna fila
+  // TRANSITION en PostgreSQL) y "transition" es la única que representa
+  // una Transition real y persistida (origen/destino/duración/actividad).
   var markersReady = false;
   function ensureArrowMarkers(svg) {
     if (markersReady) {
@@ -446,18 +454,19 @@
     var ns = "http://www.w3.org/2000/svg";
     var defs = document.createElementNS(ns, "defs");
     [
-      { id: "arrow-order", color: "#b7bdc7" },
-      { id: "arrow-transition", color: "#c2410c" },
+      { id: "arrow-order-exercise", color: "#9aa1ad", size: 7 },
+      { id: "arrow-order-group", color: "#64748b", size: 9 },
+      { id: "arrow-transition", color: "#c2410c", size: 9 },
     ].forEach(function (m) {
       var marker = document.createElementNS(ns, "marker");
       marker.setAttribute("id", m.id);
-      marker.setAttribute("markerWidth", "8");
-      marker.setAttribute("markerHeight", "8");
-      marker.setAttribute("refX", "6");
-      marker.setAttribute("refY", "3");
+      marker.setAttribute("markerWidth", String(m.size));
+      marker.setAttribute("markerHeight", String(m.size));
+      marker.setAttribute("refX", String(m.size - 2));
+      marker.setAttribute("refY", String(m.size / 2));
       marker.setAttribute("orient", "auto");
       var path = document.createElementNS(ns, "path");
-      path.setAttribute("d", "M0,0 L6,3 L0,6 Z");
+      path.setAttribute("d", "M0,0 L" + (m.size - 2) + "," + m.size / 2 + " L0," + m.size + " Z");
       path.setAttribute("fill", m.color);
       marker.appendChild(path);
       defs.appendChild(marker);
@@ -478,41 +487,65 @@
     return !!el && el.getClientRects().length > 0;
   }
 
-  function drawLine(svg, p1, p2, type, transition) {
+  // Punto de conexión en el borde (no en el centro) del nodo que queda
+  // "antes" verticalmente: así el conector vive en el hueco entre
+  // tarjetas, nunca atraviesa ni oculta el contenido de ninguna de ellas.
+  function edgePoints(aEl, bEl) {
+    var ra = nodeRect(aEl);
+    var rb = nodeRect(bEl);
+    if (ra.top <= rb.top) {
+      return {
+        p1: { x: ra.left + ra.width / 2, y: ra.top + ra.height },
+        p2: { x: rb.left + rb.width / 2, y: rb.top },
+      };
+    }
+    return {
+      p1: { x: ra.left + ra.width / 2, y: ra.top },
+      p2: { x: rb.left + rb.width / 2, y: rb.top + rb.height },
+    };
+  }
+
+  function drawLine(svg, p1, p2, markerId, strokeColor, strokeWidth, dashed, label) {
     var ns = "http://www.w3.org/2000/svg";
     var line = document.createElementNS(ns, "line");
     line.setAttribute("x1", p1.x);
     line.setAttribute("y1", p1.y);
     line.setAttribute("x2", p2.x);
     line.setAttribute("y2", p2.y);
-    if (type === "transition") {
-      line.setAttribute("stroke", "#c2410c");
-      line.setAttribute("stroke-width", "2.5");
+    line.setAttribute("stroke", strokeColor);
+    line.setAttribute("stroke-width", String(strokeWidth));
+    if (dashed) {
       line.setAttribute("stroke-dasharray", "7,5");
-      line.setAttribute("marker-end", "url(#arrow-transition)");
-    } else {
-      line.setAttribute("stroke", "#b7bdc7");
-      line.setAttribute("stroke-width", "1.5");
-      line.setAttribute("marker-end", "url(#arrow-order)");
     }
+    line.setAttribute("marker-end", "url(#" + markerId + ")");
     svg.appendChild(line);
 
-    if (type === "transition") {
-      var midX = (p1.x + p2.x) / 2;
-      var midY = (p1.y + p2.y) / 2;
-      var parts = ["Transición"];
-      if (transition.duration) {
-        parts.push(transition.duration.value + " " + transition.duration.unit);
-      }
-      if (transition.activity) {
-        parts.push("+ actividad");
-      }
+    if (label) {
+      // Ancla a la izquierda (no al punto medio): los nodos (ejercicio o
+      // grupo) muestran su propio texto pegado a los bordes izquierdo y
+      // derecho, así que un punto medio cualquiera puede caer encima de
+      // ese texto. Partir siempre desde el borde izquierdo del más
+      // estrecho de los dos extremos evita esa zona. Además se añade un
+      // rectángulo de fondo detrás del texto (medido con getBBox tras
+      // insertarlo), para que nunca quede ilegible sobre lo que haya
+      // debajo, sea texto de un nodo o la propia línea.
+      var labelX = Math.min(p1.x, p2.x) + 10;
+      var labelY = (p1.y + p2.y) / 2 + 3;
       var text = document.createElementNS(ns, "text");
-      text.setAttribute("x", midX + 6);
-      text.setAttribute("y", midY - 6);
+      text.setAttribute("x", labelX);
+      text.setAttribute("y", labelY);
       text.setAttribute("class", "arrow-label");
-      text.textContent = parts.join(" · ");
+      text.textContent = label;
       svg.appendChild(text);
+      var bbox = text.getBBox();
+      var bg = document.createElementNS(ns, "rect");
+      bg.setAttribute("x", bbox.x - 3);
+      bg.setAttribute("y", bbox.y - 2);
+      bg.setAttribute("width", bbox.width + 6);
+      bg.setAttribute("height", bbox.height + 4);
+      bg.setAttribute("rx", "3");
+      bg.setAttribute("class", "arrow-label-bg");
+      svg.insertBefore(bg, text);
     }
   }
 
@@ -522,6 +555,7 @@
     if (!svg || !treeRoot) {
       return;
     }
+    treeRoot.classList.toggle("arrows-on", orderStyleMode === "B");
     while (svg.firstChild) {
       svg.removeChild(svg.firstChild);
     }
@@ -532,11 +566,6 @@
     svg.setAttribute("width", w);
     svg.setAttribute("height", h);
 
-    function center(el) {
-      var r = nodeRect(el);
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-    }
-
     if (orderStyleMode === "B") {
       orderContainers.forEach(function (ids) {
         for (var i = 0; i < ids.length - 1; i++) {
@@ -545,7 +574,13 @@
           if (!isVisible(a) || !isVisible(b)) {
             continue;
           }
-          drawLine(svg, center(a), center(b), "order");
+          var bothGroups = flowTypeIndex[ids[i]] === "group" && flowTypeIndex[ids[i + 1]] === "group";
+          var pts = edgePoints(a, b);
+          if (bothGroups) {
+            drawLine(svg, pts.p1, pts.p2, "arrow-order-group", "#64748b", 2.5, false, null);
+          } else {
+            drawLine(svg, pts.p1, pts.p2, "arrow-order-exercise", "#9aa1ad", 1.5, false, null);
+          }
         }
       });
     }
@@ -556,7 +591,15 @@
       if (!isVisible(a) || !isVisible(b)) {
         return;
       }
-      drawLine(svg, center(a), center(b), "transition", t);
+      var parts = ["Transición"];
+      if (t.duration) {
+        parts.push(t.duration.value + " " + t.duration.unit);
+      }
+      if (t.activity) {
+        parts.push("+ actividad");
+      }
+      var pts = edgePoints(a, b);
+      drawLine(svg, pts.p1, pts.p2, "arrow-transition", "#c2410c", 2.5, true, parts.join(" · "));
     });
   }
 
