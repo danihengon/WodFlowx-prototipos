@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WodFlowX — Prototipo bloque 4.2: edición de secciones y grupos</title>
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="editor.css" />
+</head>
+<body>
+  <div class="proto-banner">PROTOTIPO DE DISEÑO — HTML/CSS/JS local, datos ficticios en memoria, sin React, sin React Flow, sin backend. Nada se guarda ni se envía a ningún servidor. Subbloque 4.2: crear, editar, reordenar y eliminar secciones y grupos principales (sin subgrupos ni ejercicios, eso es 4.3+).</div>
+
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="brand-mini">
+        <span class="brand-mark">WFX</span>
+        WodFlowX
+      </div>
+      <div class="user-chip desktop-only">
+        Entrenador Demo (Entrenador)
+        <button class="logout-link" type="button" disabled>Cerrar sesión</button>
+      </div>
+      <button class="menu-toggle mobile-only" aria-label="Abrir menú" aria-expanded="false">☰ Menú</button>
+    </header>
+
+    <nav class="mobile-menu">
+      <a class="mobile-menu-item" href="../../bloque1/index.html">Inicio</a>
+      <a class="mobile-menu-item active" href="entrenamientos.html">Entrenamientos</a>
+      <span class="mobile-menu-item disabled">Ejercicios (ya implementado — bloque 2)</span>
+      <span class="mobile-menu-item disabled">Usuarios (próximamente)</span>
+      <span class="mobile-menu-item logout">Cerrar sesión</span>
+    </nav>
+
+    <div class="app-body">
+      <nav class="app-sidenav">
+        <a class="nav-item" href="../../bloque1/index.html">Inicio</a>
+        <a class="nav-item active" href="entrenamientos.html">Entrenamientos</a>
+        <span class="nav-item disabled">Ejercicios</span>
+        <span class="nav-item disabled">Usuarios (próximamente)</span>
+      </nav>
+
+      <main class="app-content">
+        <div class="editor-header">
+          <div class="editor-header-title">
+            <h1 id="workoutTitle">Entrenamiento</h1>
+            <div class="editor-header-meta" id="workoutMeta"></div>
+          </div>
+        </div>
+
+        <div class="compare-panel">
+          <h2>Escenario de prueba (solo del prototipo)</h2>
+          <div class="compare-row">
+            <div class="compare-group">
+              <span class="compare-label">Datos:</span>
+              <div class="seg-control" id="segScenario">
+                <button type="button" data-action="set-scenario" data-key="A">A — Vacío</button>
+                <button type="button" data-action="set-scenario" data-key="B">B — Sección vacía</button>
+                <button type="button" data-action="set-scenario" data-key="C" class="active">C — Varios grupos</button>
+                <button type="button" data-action="set-scenario" data-key="D">D — Operaciones sensibles</button>
+              </div>
+            </div>
+          </div>
+          <p class="scenario-note">Cambia de escenario para probar cada caso sin recargar la página: A (sin ninguna sección), B (una sección vacía, sin grupos), C (varios grupos y ejercicios, igual que el prototipo aprobado 4.1) y D (pensado para probar las eliminaciones: una sección con grupos — bloqueada —, un grupo con subgrupo/ejercicios/transición — eliminación en cascada —, y una sección vacía — eliminación permitida).</p>
+        </div>
+
+        <div class="empty-state" id="emptyWorkoutState" style="display:none;">
+          <strong>Sin estructura todavía</strong>
+          <span>Este entrenamiento todavía no tiene ninguna sección.</span>
+          <button type="button" class="btn btn-primary" data-action="add-section">Añadir sección</button>
+        </div>
+
+        <div class="compare-panel" id="comparePanel">
+          <h2>Opciones de visualización (solo del prototipo, no son parte del diseño final)</h2>
+          <div class="compare-row">
+            <div class="compare-group">
+              <span class="compare-label">Vista:</span>
+              <div class="seg-control" id="segView">
+                <button type="button" data-value="diagram" class="active">Diagrama</button>
+                <button type="button" data-value="list">Lista</button>
+              </div>
+            </div>
+            <div class="compare-group">
+              <span class="compare-label">Orden visual:</span>
+              <div class="seg-control" id="segOrder">
+                <button type="button" data-value="A" class="active">Sin flechas (A)</button>
+                <button type="button" data-value="B">Con flechas (B)</button>
+              </div>
+            </div>
+            <div class="compare-group">
+              <span class="compare-label">Detalle del elemento:</span>
+              <div class="seg-control" id="segDetail">
+                <button type="button" data-value="panel" class="active">Panel lateral</button>
+                <button type="button" data-value="modal">Modal</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="editor-toolbar" id="editorToolbar">
+          <div class="toolbar-group">
+            <button type="button" class="btn-icon" id="btnZoomOut" aria-label="Alejar">−</button>
+            <span class="toolbar-zoom-level" id="zoomLevel">100%</span>
+            <button type="button" class="btn-icon" id="btnZoomIn" aria-label="Acercar">+</button>
+          </div>
+          <button type="button" class="btn btn-secondary" id="btnFitView">Ver todo</button>
+          <button type="button" class="btn btn-primary" data-action="add-section">+ Añadir sección</button>
+          <div class="toolbar-spacer"></div>
+        </div>
+
+        <div class="editor-main" id="editorMain">
+          <div class="editor-stage">
+            <div id="viewDiagram">
+              <div class="canvas-viewport" id="canvasViewport">
+                <div class="canvas-world" id="canvasWorld">
+                  <svg class="canvas-svg-layer" id="canvasSvg" width="100" height="100"></svg>
+                  <div class="canvas-tree" id="canvasTree"></div>
+                </div>
+                <span class="canvas-hint">Arrastra para desplazar · rueda del ratón para zoom · pulsa un elemento para ver y gestionar su detalle</span>
+              </div>
+            </div>
+            <div id="viewList" style="display:none;">
+              <div class="hierarchy-list" id="hierarchyList"></div>
+            </div>
+          </div>
+
+          <aside class="detail-panel" id="detailPanel">
+            <div id="detailPanelBody">
+              <p class="detail-panel-placeholder">Selecciona una sección o un grupo principal del diagrama o de la lista para ver y gestionar aquí sus datos.</p>
+            </div>
+          </aside>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal de detalle (alternativa de selección en escritorio; siempre en móvil) -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <h2 id="modalTitle">Detalle</h2>
+        <button class="modal-close" type="button" id="modalCloseBtn" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Modal de formulario (alta/edición de sección o grupo) -->
+  <div class="modal-overlay" id="formOverlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="formTitle">
+      <div class="modal-header">
+        <h2 id="formTitle">Añadir sección</h2>
+        <button class="modal-close" type="button" id="formCloseBtn" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal-body" id="formBody"></div>
+    </div>
+  </div>
+
+  <!-- Modal de confirmación (eliminar / restricción bloqueada) -->
+  <div class="modal-overlay confirm" id="confirmOverlay">
+    <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <div class="modal-header">
+        <h2 id="confirmTitle">Confirmar</h2>
+      </div>
+      <div class="modal-body" id="confirmBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="confirmCancelBtn">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="confirmOkBtn">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="nav.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
