@@ -39,6 +39,7 @@
   var viewMode = "diagram"; // 'diagram' | 'list'
   var orderStyleMode = "A"; // 'A' sin flechas de orden | 'B' con flechas de orden
   var detailStyleMode = "panel"; // 'panel' | 'modal'
+  var layoutMode = "vertical"; // 'vertical' | 'horizontal' (igual que DiagramOrientation del 4.1 real)
   var scale = 1;
   var panX = 40;
   var panY = 20;
@@ -195,15 +196,19 @@
   }
 
   // ---------- Mutaciones: secciones ----------
+  // IMPORTANTE: no se reordena por `.position` aquí. Estas funciones se
+  // llaman siempre DESPUÉS de que el array ya quedó en el orden correcto
+  // (tras el splice de moveSectionBy/moveGroupBy, o tras el filter de un
+  // borrado), y solo renumeran 1..N según ese orden de array. Reordenar
+  // aquí por el valor antiguo de `.position` era el fallo real de P08/P09:
+  // deshacía el splice y dejaba el orden exactamente como estaba antes.
   function renumberSections() {
-    TREE.sections.sort(byPosition);
     TREE.sections.forEach(function (s, idx) {
       s.position = idx + 1;
     });
   }
 
   function renumberGroups(sec) {
-    sec.groups.sort(byPosition);
     sec.groups.forEach(function (mg, idx) {
       mg.position = idx + 1;
     });
@@ -839,10 +844,21 @@
   }
 
   // ---------- Diagrama ----------
+  // Un nodo que es ORIGEN de una transición real necesita algo más de
+  // espacio bajo su tarjeta para que la etiqueta de esa transición no quede
+  // encima de la siguiente tarjeta (P22). Reservar ese hueco solo en los
+  // nodos que realmente lo necesitan (en vez de agrandar separaciones de
+  // forma genérica) mantiene el resto del lienzo compacto.
+  function hasOutgoingTransition(flowElementId) {
+    return TREE.transitions.some(function (t) {
+      return t.originFlowElementId === flowElementId;
+    });
+  }
+
   function buildExerciseEl(e) {
     var key = exKeyOf(e);
     var el = document.createElement("div");
-    el.className = "node node-exercise";
+    el.className = "node node-exercise" + (hasOutgoingTransition(e.flowElementId) ? " has-outgoing-transition" : "");
     el.dataset.key = key;
     el.dataset.flowElementId = e.flowElementId;
     el.tabIndex = 0;
@@ -874,7 +890,7 @@
     var isExpanded = expandedKeys.has(key);
 
     var el = document.createElement("div");
-    el.className = "node node-group depth-" + Math.min(depth, 4);
+    el.className = "node node-group depth-" + Math.min(depth, 4) + (hasOutgoingTransition(g.flowElementId) ? " has-outgoing-transition" : "");
     el.dataset.key = key;
     el.dataset.flowElementId = g.flowElementId;
 
@@ -1089,11 +1105,16 @@
     svg.appendChild(line);
 
     if (label) {
-      var labelX = Math.min(p1.x, p2.x) + 10;
+      // Centrada en el punto medio real del conector (no desplazada al
+      // extremo izquierdo): así la etiqueta queda sobre el hueco reservado
+      // entre origen y destino (ver hasOutgoingTransition) y no sobre la
+      // tarjeta de ningún otro elemento que resulte estar a esa altura.
+      var labelX = (p1.x + p2.x) / 2;
       var labelY = (p1.y + p2.y) / 2 + 3;
       var text = document.createElementNS(ns, "text");
       text.setAttribute("x", labelX);
       text.setAttribute("y", labelY);
+      text.setAttribute("text-anchor", "middle");
       text.setAttribute("class", "arrow-label");
       text.textContent = label;
       svg.appendChild(text);
@@ -1115,7 +1136,6 @@
     if (!svg || !treeRoot) {
       return;
     }
-    treeRoot.classList.toggle("arrows-on", orderStyleMode === "B");
     while (svg.firstChild) {
       svg.removeChild(svg.firstChild);
     }
@@ -1126,12 +1146,24 @@
     svg.setAttribute("width", w);
     svg.setAttribute("height", h);
 
+    // Pares que ya tienen una transición real: si al activar "con flechas"
+    // el orden visual coincide exactamente con una transición existente, no
+    // se dibuja una segunda flecha gris encima (evita la duplicidad citada
+    // en el encargo, P22 9.3).
+    var transitionPairs = {};
+    TREE.transitions.forEach(function (t) {
+      transitionPairs[t.originFlowElementId + ">" + t.destinationFlowElementId] = true;
+    });
+
     if (orderStyleMode === "B") {
       orderContainers.forEach(function (ids) {
         for (var i = 0; i < ids.length - 1; i++) {
           var a = flowIndex[ids[i]];
           var b = flowIndex[ids[i + 1]];
           if (!isVisible(a) || !isVisible(b)) {
+            continue;
+          }
+          if (transitionPairs[ids[i] + ">" + ids[i + 1]]) {
             continue;
           }
           var bothGroups = flowTypeIndex[ids[i]] === "group" && flowTypeIndex[ids[i + 1]] === "group";
@@ -1292,10 +1324,26 @@
     document.getElementById("zoomLevel").textContent = Math.round(scale * 100) + "%";
   }
 
-  function zoomBy(delta) {
-    scale = Math.max(0.4, Math.min(2, scale + delta));
+  // Zoom anclado a un punto del viewport (en coordenadas de viewport, no de
+  // mundo): el punto bajo el cursor/dedo se queda en el mismo sitio en
+  // pantalla tras el zoom, en vez de que todo se aleje del cursor hacia la
+  // esquina superior izquierda (causa real de P20: antes solo se cambiaba
+  // `scale` sin tocar panX/panY, así que al hacer zoom sobre un bloque este
+  // "huía" del cursor en vez de acercarse/alejarse bajo él).
+  function zoomAt(x, y, delta) {
+    var newScale = Math.max(0.4, Math.min(2, scale + delta));
+    var worldX = (x - panX) / scale;
+    var worldY = (y - panY) / scale;
+    scale = newScale;
+    panX = x - worldX * newScale;
+    panY = y - worldY * newScale;
     applyTransform();
     requestAnimationFrame(drawArrows);
+  }
+
+  function zoomBy(delta) {
+    var viewport = document.getElementById("canvasViewport");
+    zoomAt(viewport.clientWidth / 2, viewport.clientHeight / 2, delta);
   }
 
   function fitView() {
@@ -1319,16 +1367,53 @@
   function wireCanvasInteraction() {
     var viewport = document.getElementById("canvasViewport");
     var isPanning = false;
+    var dragMoved = false;
     var startX = 0;
     var startY = 0;
     var origX = 0;
     var origY = 0;
 
+    // Umbral de distinción toque/arrastre: mismo valor (10px) que
+    // TAP_MOVE_THRESHOLD_PX en useTapActivate.ts (bloque 4.1 real), para
+    // que el criterio de "¿fue una pulsación o un arrastre?" sea
+    // consistente con el ya aprobado, no una solución distinta inventada
+    // para el prototipo.
+    var DRAG_THRESHOLD = 10;
+
+    // Se marca a true en cuanto un gesto (ratón o táctil) supera el
+    // umbral de arrastre. Un listener en fase de CAPTURA sobre el propio
+    // viewport descarta entonces el "click" que el navegador dispara al
+    // soltar, antes de que llegue a los manejadores de clic de cualquier
+    // nodo/cabecera/botón — así un arrastre iniciado sobre un bloque nunca
+    // abre su detalle ni lo expande/contrae (P19, puntos 6 y 7), pero una
+    // pulsación corta sobre ese mismo bloque conserva su acción normal
+    // (P19, punto 5), y los botones dentro del lienzo (expandir, "+
+    // Añadir grupo") siguen funcionando con un clic simple (P19, punto 8).
+    var suppressNextClick = false;
+    viewport.addEventListener(
+      "click",
+      function (ev) {
+        if (suppressNextClick) {
+          suppressNextClick = false;
+          ev.stopPropagation();
+          ev.preventDefault();
+        }
+      },
+      true
+    );
+
+    // A propósito, SIN excluir `.node`/cabeceras de sección: antes el
+    // paneo se cancelaba por completo si el gesto empezaba sobre un
+    // bloque, que era la causa real de P19 ("solo se puede desplazar
+    // iniciando desde el fondo gris"). Ahora el paneo siempre puede
+    // empezar en cualquier punto del lienzo; lo que decide si además
+    // selecciona/expande algo es únicamente si hubo arrastre o no.
     viewport.addEventListener("mousedown", function (ev) {
-      if (ev.target.closest(".node") || ev.target.closest(".section-lane-header") || ev.target.closest("[data-action]")) {
+      if (ev.button !== 0) {
         return;
       }
       isPanning = true;
+      dragMoved = false;
       viewport.classList.add("panning");
       startX = ev.clientX;
       startY = ev.clientY;
@@ -1339,15 +1424,25 @@
       if (!isPanning) {
         return;
       }
-      panX = origX + (ev.clientX - startX);
-      panY = origY + (ev.clientY - startY);
-      applyTransform();
+      var dx = ev.clientX - startX;
+      var dy = ev.clientY - startY;
+      if (!dragMoved && dx * dx + dy * dy > DRAG_THRESHOLD * DRAG_THRESHOLD) {
+        dragMoved = true;
+      }
+      if (dragMoved) {
+        panX = origX + dx;
+        panY = origY + dy;
+        applyTransform();
+      }
     });
     window.addEventListener("mouseup", function () {
       if (isPanning) {
         isPanning = false;
         viewport.classList.remove("panning");
-        requestAnimationFrame(drawArrows);
+        if (dragMoved) {
+          suppressNextClick = true;
+          requestAnimationFrame(drawArrows);
+        }
       }
     });
 
@@ -1400,10 +1495,11 @@
       "touchstart",
       function (ev) {
         if (ev.touches.length === 1) {
-          touchMode = ev.target.closest(".node") || ev.target.closest("[data-action]") ? "node" : null;
-          if (touchMode === null) {
-            beginPan(ev.touches[0]);
-          }
+          // Siempre "pan" (nunca se excluye por empezar sobre un bloque:
+          // misma corrección que en mousedown). dragMoved decide después,
+          // al soltar, si además fue una pulsación.
+          dragMoved = false;
+          beginPan(ev.touches[0]);
         } else if (ev.touches.length === 2) {
           beginPinch(ev.touches[0], ev.touches[1]);
         } else {
@@ -1422,6 +1518,7 @@
             return;
           }
           ev.preventDefault();
+          dragMoved = true;
           var newDist = touchDistance(ev.touches[0], ev.touches[1]);
           var ratio = newDist / pinchStartDist;
           var newScale = Math.max(0.4, Math.min(2, pinchStartScale * ratio));
@@ -1433,10 +1530,21 @@
           applyTransform();
         } else if (ev.touches.length === 1) {
           if (touchMode === "pan") {
-            ev.preventDefault();
-            panX = touchOrigX + (ev.touches[0].clientX - touchStartX);
-            panY = touchOrigY + (ev.touches[0].clientY - touchStartY);
-            applyTransform();
+            var dx = ev.touches[0].clientX - touchStartX;
+            var dy = ev.touches[0].clientY - touchStartY;
+            if (!dragMoved && dx * dx + dy * dy > DRAG_THRESHOLD * DRAG_THRESHOLD) {
+              dragMoved = true;
+            }
+            if (dragMoved) {
+              // touch-action:none ya impide que el navegador intente su
+              // propio scroll/zoom nativo en este elemento (ver CSS), así
+              // que no hay carrera con el preventDefault condicional de
+              // aquí: es seguro decidirlo solo a partir del umbral.
+              ev.preventDefault();
+              panX = touchOrigX + dx;
+              panY = touchOrigY + dy;
+              applyTransform();
+            }
           } else if (touchMode === "pinch") {
             beginPan(ev.touches[0]);
           }
@@ -1447,9 +1555,13 @@
 
     function endTouch(ev) {
       if (ev.touches.length === 0) {
+        if (touchMode === "pan" && dragMoved) {
+          suppressNextClick = true;
+          requestAnimationFrame(drawArrows);
+        }
         touchMode = null;
-        requestAnimationFrame(drawArrows);
       } else if (ev.touches.length === 1) {
+        dragMoved = false;
         beginPan(ev.touches[0]);
       } else if (ev.touches.length >= 2) {
         beginPinch(ev.touches[0], ev.touches[1]);
@@ -1462,7 +1574,8 @@
       "wheel",
       function (ev) {
         ev.preventDefault();
-        zoomBy(ev.deltaY < 0 ? 0.1 : -0.1);
+        var rect = viewport.getBoundingClientRect();
+        zoomAt(ev.clientX - rect.left, ev.clientY - rect.top, ev.deltaY < 0 ? 0.1 : -0.1);
       },
       { passive: false }
     );
@@ -1507,6 +1620,17 @@
   function setDetailStyle(mode) {
     detailStyleMode = mode;
     renderDetail();
+  }
+
+  // Distribución Vertical/Horizontal del diagrama (P16): recuperada del
+  // bloque 4.1 aprobado (DiagramOrientation en StructureEditorBody.tsx).
+  // Es un cambio real de layout (flex-direction del contenedor de
+  // secciones), no solo una clase CSS decorativa: cambia dónde se colocan
+  // las secciones entre sí, y por eso exige recalcular flechas y reencuadre.
+  function setLayoutMode(mode) {
+    layoutMode = mode;
+    document.getElementById("canvasTree").classList.toggle("layout-horizontal", mode === "horizontal");
+    requestAnimationFrame(fitView);
   }
 
   // ---------- Cabecera del entrenamiento y cuerpo (estado vacío) ----------
@@ -1636,6 +1760,7 @@
     wireSegControl("segView", setViewMode);
     wireSegControl("segOrder", setOrderStyle);
     wireSegControl("segDetail", setDetailStyle);
+    wireSegControl("segLayout", setLayoutMode);
 
     resetToScenario(currentScenarioKey);
 

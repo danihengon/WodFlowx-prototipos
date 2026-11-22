@@ -170,8 +170,17 @@
 
 .canvas-svg-layer {
   position: absolute;
-  top: 0;
-  left: 0;
+  /* +24px = el padding de .canvas-world. Los nodos usan offsetTop/Left
+     relativos a #canvasTree (su offsetParent real, position:relative),
+     cuyo origen normal-flow empieza en el borde de CONTENIDO de
+     .canvas-world — es decir, 24px (el padding) más abajo/a la derecha
+     que el borde exterior donde top:0/left:0 sitúan a este SVG
+     absolutamente posicionado. Sin esta compensación, cada línea y
+     etiqueta queda sistemáticamente desplazada 24px respecto a los nodos
+     reales que conecta: causa real de que las flechas no se vean
+     "pegadas" a los bloques y de las etiquetas mal situadas (P22). */
+  top: 24px;
+  left: 24px;
   pointer-events: none;
   overflow: visible;
   z-index: 2;
@@ -185,9 +194,13 @@
   gap: 22px;
 }
 
-.canvas-tree.arrows-on .node-group,
-.canvas-tree.arrows-on .node-exercise {
-  margin-bottom: 20px;
+/* Distribución horizontal (P16, recuperada del bloque 4.1 real): las
+   secciones pasan de apilarse en columna a colocarse en fila, una al lado
+   de otra; cada sección conserva su propia organización interna (igual
+   que en DiagramOrientation="horizontal" de StructureEditorBody.tsx). */
+.canvas-tree.layout-horizontal {
+  flex-direction: row;
+  align-items: flex-start;
 }
 
 .canvas-hint {
@@ -210,6 +223,15 @@
   padding: 10px 12px 14px;
   background: rgba(255, 255, 255, 0.55);
   width: 620px;
+  flex-shrink: 0;
+}
+
+/* Hueco reservado bajo un bloque que es origen de una transición real, para
+   que la etiqueta de esa transición (P22) no quede encima de la siguiente
+   tarjeta. Solo en los bloques que de verdad lo necesitan (no un margen
+   general) para mantener el resto del lienzo compacto. */
+.node.has-outgoing-transition {
+  margin-bottom: 34px;
 }
 
 .section-lane-header {
