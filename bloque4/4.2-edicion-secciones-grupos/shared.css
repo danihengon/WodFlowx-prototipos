@@ -268,7 +268,17 @@ button {
   background: #e6e9ee;
 }
 
-@media (max-width: 640px) {
+/*
+ * Segunda condición (igual que useIsNarrowViewport en el bloque 4.1 real,
+ * frontend/src/styles/app.css): un móvil girado a apaisado puede superar
+ * fácilmente 640px de ancho (ej. 844x390) pero sigue siendo un teléfono,
+ * no una tableta ni un portátil con la ventana estrecha — por eso también
+ * cuenta por una altura de viewport reducida combinada con puntero
+ * "coarse" (solo táctil, descarta ratón/trackpad). Causa real de M11: el
+ * prototipo solo comprobaba el ancho, así que el móvil apaisado conservaba
+ * el menú lateral de escritorio.
+ */
+@media (max-width: 640px), (max-height: 500px) and (pointer: coarse) {
   .app-sidenav,
   .desktop-only {
     display: none;
@@ -286,5 +296,13 @@ button {
 
   .app-content {
     padding: 14px;
+  }
+}
+
+/* Apaisado real (viewport ya de por sí bajo): recorta además el propio
+   padding del contenido para que el lienzo del diagrama empiece antes. */
+@media (max-height: 500px) and (pointer: coarse) {
+  .app-content {
+    padding: 10px 16px;
   }
 }

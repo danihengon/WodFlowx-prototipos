@@ -44,11 +44,25 @@
   var panX = 40;
   var panY = 20;
 
+  // Límites de zoom compartidos por fitView, los botones +/-, la rueda y el
+  // pellizco táctil (antes cada uno tenía su propio límite: fitView podía
+  // bajar hasta 0.2 pero el zoom interactivo no pasaba de 0.4, así que tras
+  // un "Ver todo" en móvil apaisado el primer gesto de zoom "saltaba" de
+  // golpe). 0.08 replica la corrección equivalente ya aprobada en React 4.1
+  // (minZoom=0.05 en WorkoutDiagram.tsx, documentada allí como necesaria
+  // para que "Ver todo" no recorte secciones con varios bloques en un
+  // lienzo bajo) — causa real de M13: antes, si el encuadre necesitaba una
+  // escala menor que 0.2 para que las tres secciones cupieran en un móvil
+  // apaisado, se forzaba de vuelta a 0.2 y el contenido se recortaba.
+  var MIN_SCALE = 0.08;
+  var MAX_SCALE = 2.2;
+
   var dataIndex = {};
   var flowNameIndex = {};
   var flowTypeIndex = {};
   var nodeElements = {};
   var flowIndex = {};
+  var parentOfFlowElementId = {};
   var orderContainers = [];
 
   var lastFocusedBeforeModal = null;
@@ -142,6 +156,12 @@
     flowNameIndex[g.flowElementId] = g.name;
     flowTypeIndex[g.flowElementId] = "group";
     g.content.slice().forEach(function (ci) {
+      // Quién es el padre (contenedor) real de cada elemento, por
+      // flowElementId: permite, al dibujar una transición cuyo extremo
+      // queda oculto dentro de un grupo contraído, representar la relación
+      // sobre el ancestro visible más cercano en vez de hacerla desaparecer
+      // sin más (ver resolveVisibleAncestor).
+      parentOfFlowElementId[ci.item.flowElementId] = g.flowElementId;
       if (ci.kind === "group") {
         indexGroup(ci.item, depth + 1);
       } else {
@@ -161,6 +181,7 @@
     dataIndex = {};
     flowNameIndex = {};
     flowTypeIndex = {};
+    parentOfFlowElementId = {};
     TREE.sections.forEach(indexSection);
   }
 
@@ -382,11 +403,7 @@
       '<input type="text" id="fSectionName" value="' + name + '" maxlength="120" /></div>' +
       '<div id="fSectionNameError" class="field-error" style="display:none;"></div>' +
       '<div class="field"><label for="fSectionDesc">Descripción</label>' +
-      "<textarea id=\"fSectionDesc\">" + desc + "</textarea></div>" +
-      '<div class="modal-footer">' +
-      '<button type="button" class="btn btn-secondary" id="formCancelBtn">Cancelar</button>' +
-      '<button type="button" class="btn btn-primary" id="formSaveBtn">Guardar</button>' +
-      "</div>"
+      "<textarea id=\"fSectionDesc\">" + desc + "</textarea></div>"
     );
   }
 
@@ -400,11 +417,7 @@
       '<input type="text" id="fGroupName" value="' + name + '" maxlength="120" /></div>' +
       '<div id="fGroupNameError" class="field-error" style="display:none;"></div>' +
       '<div class="field"><label for="fGroupDesc">Descripción</label>' +
-      "<textarea id=\"fGroupDesc\">" + desc + "</textarea></div>" +
-      '<div class="modal-footer">' +
-      '<button type="button" class="btn btn-secondary" id="formCancelBtn">Cancelar</button>' +
-      '<button type="button" class="btn btn-primary" id="formSaveBtn">Guardar</button>' +
-      "</div>"
+      "<textarea id=\"fGroupDesc\">" + desc + "</textarea></div>"
     );
   }
 
@@ -413,7 +426,6 @@
     formContext = { kind: "section", sectionId: null, editId: sectionId || null };
     document.getElementById("formTitle").textContent = existing ? "Editar sección" : "Añadir sección";
     document.getElementById("formBody").innerHTML = buildSectionFormHtml(existing);
-    wireFormFooterButtons();
     openOverlay("formOverlay", "fSectionName");
   }
 
@@ -426,15 +438,7 @@
     formContext = { kind: "group", sectionId: sectionId, editId: sectionGroupId || null };
     document.getElementById("formTitle").textContent = existingEntry ? "Editar grupo" : "Añadir grupo";
     document.getElementById("formBody").innerHTML = buildGroupFormHtml(sec, existingEntry ? existingEntry.mg.group : null);
-    wireFormFooterButtons();
     openOverlay("formOverlay", "fGroupName");
-  }
-
-  function wireFormFooterButtons() {
-    document.getElementById("formCancelBtn").addEventListener("click", function () {
-      closeOverlay("formOverlay");
-    });
-    document.getElementById("formSaveBtn").addEventListener("click", saveForm);
   }
 
   function saveForm() {
@@ -767,8 +771,21 @@
     return detailHtmlForExercise(entry.data);
   }
 
+  // Misma condición combinada que useIsNarrowViewport(760) en el bloque 4.1
+  // real (StructureEditorBody.tsx): no solo ancho estrecho, también un
+  // móvil girado a apaisado (puede superar 760px de ancho con 844x390 y
+  // seguir siendo un teléfono) cuenta como "estrecho", detectado por poca
+  // altura + puntero táctil. Causa real de M12: antes solo se comprobaba
+  // el ancho, así que un móvil apaisado conservaba el panel lateral de
+  // escritorio en vez de mostrar el detalle en modal.
+  var NARROW_MEDIA_QUERY = "(max-width: 760px), (max-height: 500px) and (pointer: coarse)";
+
+  function isNarrowViewport() {
+    return window.matchMedia(NARROW_MEDIA_QUERY).matches;
+  }
+
   function effectiveDetailMode() {
-    return window.innerWidth <= 760 ? "modal" : detailStyleMode;
+    return isNarrowViewport() ? "modal" : detailStyleMode;
   }
 
   function renderDetail() {
@@ -1089,28 +1106,129 @@
     };
   }
 
-  function drawLine(svg, p1, p2, markerId, strokeColor, strokeWidth, dashed, label) {
-    var ns = "http://www.w3.org/2000/svg";
-    var line = document.createElementNS(ns, "line");
-    line.setAttribute("x1", p1.x);
-    line.setAttribute("y1", p1.y);
-    line.setAttribute("x2", p2.x);
-    line.setAttribute("y2", p2.y);
-    line.setAttribute("stroke", strokeColor);
-    line.setAttribute("stroke-width", String(strokeWidth));
-    if (dashed) {
-      line.setAttribute("stroke-dasharray", "7,5");
+  // Resuelve, para un flowElementId dado, el elemento VISIBLE más cercano
+  // que lo representa: él mismo si está construido y visible, o si no su
+  // ancestro (grupo contenedor) más próximo que sí lo esté. Así, si el
+  // extremo real de una transición queda oculto al contraer un grupo, la
+  // conexión se sigue dibujando sobre ese grupo contraído (que sigue
+  // visible) en vez de desaparecer o, peor, redirigirse a otro ejercicio
+  // distinto — exactamente lo que pide la Parte B del encargo.
+  function resolveVisibleAncestor(flowElementId) {
+    var current = flowElementId;
+    var guard = 0;
+    while (current !== undefined && current !== null && guard++ < 30) {
+      var el = flowIndex[current];
+      if (isVisible(el)) {
+        return el;
+      }
+      current = parentOfFlowElementId[current];
     }
-    line.setAttribute("marker-end", "url(#" + markerId + ")");
-    svg.appendChild(line);
+    return null;
+  }
+
+  // ¿El segmento p1->p2 pasa por dentro del rectángulo `rect`? Se muestrea
+  // en los dos extremos de la franja vertical donde ambos se solapan y en
+  // su punto medio: suficiente para el caso real de este prototipo (tarjetas
+  // apiladas en columna, conectores casi verticales), sin necesitar un
+  // algoritmo de intersección de segmentos completo.
+  function segmentIntersectsRect(p1, p2, rect) {
+    var minY = Math.min(p1.y, p2.y);
+    var maxY = Math.max(p1.y, p2.y);
+    var rTop = rect.top;
+    var rBottom = rect.top + rect.height;
+    if (rBottom < minY || rTop > maxY) {
+      return false;
+    }
+    var sampleYs = [Math.max(minY, rTop), Math.min(maxY, rBottom), (Math.max(minY, rTop) + Math.min(maxY, rBottom)) / 2];
+    for (var i = 0; i < sampleYs.length; i++) {
+      var y = sampleYs[i];
+      var t = p2.y === p1.y ? 0 : (y - p1.y) / (p2.y - p1.y);
+      var x = p1.x + t * (p2.x - p1.x);
+      if (x >= rect.left - 2 && x <= rect.left + rect.width + 2) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // ¿Hay algún OTRO bloque visible interpuesto entre aEl y bEl, a lo largo
+  // del trazado recto que normalmente los uniría? Se ignoran los propios
+  // antepasados/descendientes de cualquiera de los dos extremos (una
+  // tarjeta siempre "contiene" visualmente a sus propios hijos, eso no es
+  // una obstrucción). Causa real de P22/M10/M15: tras reordenar grupos, una
+  // transición entre dos elementos ya no consecutivos atravesaba la
+  // tarjeta del elemento que había quedado en medio.
+  function findBlockingRect(aEl, bEl, p1, p2) {
+    for (var key in nodeElements) {
+      var el = nodeElements[key];
+      if (!el || el === aEl || el === bEl || !isVisible(el)) {
+        continue;
+      }
+      if (aEl.contains(el) || bEl.contains(el) || el.contains(aEl) || el.contains(bEl)) {
+        continue;
+      }
+      var r = nodeRect(el);
+      if (segmentIntersectsRect(p1, p2, r)) {
+        return r;
+      }
+    }
+    return null;
+  }
+
+  // Contador de "carril" lateral: cuando varias conexiones rodeadas
+  // coinciden en el mismo tramo, se desplaza cada una un poco más a la
+  // derecha para que ninguna quede pegada a otra (ni sus etiquetas
+  // amontonadas en el mismo punto). Se reinicia en cada drawArrows().
+  var routeChannel = 0;
+
+  // Camino ortogonal de 3 tramos que rodea el obstáculo por la derecha de
+  // las tarjetas: sale por el lateral derecho de aEl, baja/sube por un
+  // carril libre reservado (ver margin-right de .node en editor.css) y
+  // entra por el lateral derecho de bEl. Conserva siempre los extremos
+  // reales de la conexión — nunca cambia a quién une.
+  function routeAround(aEl, bEl, blockingRect) {
+    var ra = nodeRect(aEl);
+    var rb = nodeRect(bEl);
+    var gutterX = Math.max(ra.left + ra.width, rb.left + rb.width, blockingRect.left + blockingRect.width) + 10 + routeChannel * 14;
+    routeChannel = (routeChannel + 1) % 3;
+    var p1 = { x: ra.left + ra.width, y: ra.top + ra.height / 2 };
+    var p2 = { x: rb.left + rb.width, y: rb.top + rb.height / 2 };
+    return [p1, { x: gutterX, y: p1.y }, { x: gutterX, y: p2.y }, p2];
+  }
+
+  function drawConnector(svg, points, markerId, strokeColor, strokeWidth, dashed, label) {
+    var ns = "http://www.w3.org/2000/svg";
+    var d = "M " + points[0].x + "," + points[0].y;
+    for (var i = 1; i < points.length; i++) {
+      d += " L " + points[i].x + "," + points[i].y;
+    }
+    var path = document.createElementNS(ns, "path");
+    path.setAttribute("d", d);
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", strokeColor);
+    path.setAttribute("stroke-width", String(strokeWidth));
+    if (dashed) {
+      path.setAttribute("stroke-dasharray", "7,5");
+    }
+    path.setAttribute("marker-end", "url(#" + markerId + ")");
+    svg.appendChild(path);
 
     if (label) {
-      // Centrada en el punto medio real del conector (no desplazada al
-      // extremo izquierdo): así la etiqueta queda sobre el hueco reservado
-      // entre origen y destino (ver hasOutgoingTransition) y no sobre la
-      // tarjeta de ningún otro elemento que resulte estar a esa altura.
-      var labelX = (p1.x + p2.x) / 2;
-      var labelY = (p1.y + p2.y) / 2 + 3;
+      // Etiqueta centrada en el punto medio del tramo más largo del
+      // recorrido: en un conector directo (2 puntos) es el único tramo,
+      // igual que antes; en uno rodeado (4 puntos) es casi siempre el
+      // tramo vertical del carril lateral, lejos de cualquier tarjeta.
+      var bestLen = -1, labelX = 0, labelY = 0;
+      for (var j = 0; j < points.length - 1; j++) {
+        var dx = points[j + 1].x - points[j].x;
+        var dy = points[j + 1].y - points[j].y;
+        var len = Math.sqrt(dx * dx + dy * dy);
+        if (len > bestLen) {
+          bestLen = len;
+          labelX = (points[j].x + points[j + 1].x) / 2;
+          labelY = (points[j].y + points[j + 1].y) / 2 + 3;
+        }
+      }
       var text = document.createElementNS(ns, "text");
       text.setAttribute("x", labelX);
       text.setAttribute("y", labelY);
@@ -1130,6 +1248,15 @@
     }
   }
 
+  function connectorPointsFor(aEl, bEl) {
+    var pts = edgePoints(aEl, bEl);
+    var blocking = findBlockingRect(aEl, bEl, pts.p1, pts.p2);
+    if (!blocking) {
+      return [pts.p1, pts.p2];
+    }
+    return routeAround(aEl, bEl, blocking);
+  }
+
   function drawArrows() {
     var svg = document.getElementById("canvasSvg");
     var treeRoot = document.getElementById("canvasTree");
@@ -1140,6 +1267,7 @@
       svg.removeChild(svg.firstChild);
     }
     ensureArrowMarkers(svg);
+    routeChannel = 0;
 
     var w = Math.max(treeRoot.scrollWidth, 10);
     var h = Math.max(treeRoot.scrollHeight, 10);
@@ -1167,20 +1295,23 @@
             continue;
           }
           var bothGroups = flowTypeIndex[ids[i]] === "group" && flowTypeIndex[ids[i + 1]] === "group";
-          var pts = edgePoints(a, b);
+          var points = connectorPointsFor(a, b);
           if (bothGroups) {
-            drawLine(svg, pts.p1, pts.p2, "arrow-order-group", "#64748b", 2.5, false, null);
+            drawConnector(svg, points, "arrow-order-group", "#64748b", 2.5, false, null);
           } else {
-            drawLine(svg, pts.p1, pts.p2, "arrow-order-exercise", "#9aa1ad", 1.5, false, null);
+            drawConnector(svg, points, "arrow-order-exercise", "#9aa1ad", 1.5, false, null);
           }
         }
       });
     }
 
     TREE.transitions.forEach(function (t) {
-      var a = flowIndex[t.originFlowElementId];
-      var b = flowIndex[t.destinationFlowElementId];
-      if (!isVisible(a) || !isVisible(b)) {
+      var a = resolveVisibleAncestor(t.originFlowElementId);
+      var b = resolveVisibleAncestor(t.destinationFlowElementId);
+      if (!a || !b || a === b) {
+        // Sin representante visible distinto para cada extremo (ambos
+        // ocultos, o ambos resueltos al mismo ancestro contraído): no se
+        // dibuja nada, nunca se redirige a otro elemento distinto.
         return;
       }
       var parts = ["Transición"];
@@ -1190,8 +1321,8 @@
       if (t.activity) {
         parts.push("+ actividad");
       }
-      var pts = edgePoints(a, b);
-      drawLine(svg, pts.p1, pts.p2, "arrow-transition", "#c2410c", 2.5, true, parts.join(" · "));
+      var points = connectorPointsFor(a, b);
+      drawConnector(svg, points, "arrow-transition", "#c2410c", 2.5, true, parts.join(" · "));
     });
   }
 
@@ -1331,7 +1462,7 @@
   // `scale` sin tocar panX/panY, así que al hacer zoom sobre un bloque este
   // "huía" del cursor en vez de acercarse/alejarse bajo él).
   function zoomAt(x, y, delta) {
-    var newScale = Math.max(0.4, Math.min(2, scale + delta));
+    var newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale + delta));
     var worldX = (x - panX) / scale;
     var worldY = (y - panY) / scale;
     scale = newScale;
@@ -1357,7 +1488,7 @@
       return;
     }
     var s = Math.min(vw / tw, vh / th, 1);
-    scale = Math.max(0.2, s);
+    scale = Math.max(MIN_SCALE, s);
     panX = Math.max(10, (vw - tw * scale) / 2);
     panY = 16;
     applyTransform();
@@ -1521,7 +1652,7 @@
           dragMoved = true;
           var newDist = touchDistance(ev.touches[0], ev.touches[1]);
           var ratio = newDist / pinchStartDist;
-          var newScale = Math.max(0.4, Math.min(2, pinchStartScale * ratio));
+          var newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchStartScale * ratio));
           var worldX = (pinchMidX - pinchStartPanX) / pinchStartScale;
           var worldY = (pinchMidY - pinchStartPanY) / pinchStartScale;
           scale = newScale;
@@ -1586,7 +1717,15 @@
     document.getElementById("btnZoomOut").addEventListener("click", function () {
       zoomBy(-0.15);
     });
-    document.getElementById("btnFitView").addEventListener("click", fitView);
+    document.getElementById("btnFitView").addEventListener("click", function () {
+      // Un giro de pantalla o un cambio de distribución puede dejar
+      // pendiente una reordenación de layout del navegador justo antes de
+      // este clic; un frame de margen asegura que clientWidth/clientHeight
+      // y el tamaño real del árbol ya reflejan el estado definitivo (causa
+      // real investigada para M13, además del límite de zoom demasiado
+      // alto corregido arriba).
+      requestAnimationFrame(fitView);
+    });
   }
 
   // ---------- Controles de comparación (vista / orden / detalle) ----------
@@ -1722,6 +1861,19 @@
         closeOverlay("formOverlay");
       }
     });
+    // Cancelar/Guardar viven ahora en un pie de modal fijo en el HTML (ver
+    // entrenamientos.html), siempre visible aunque el contenido del
+    // formulario necesite scroll interno (M12) — por eso se conectan una
+    // sola vez aquí, no cada vez que se abre un formulario (antes se
+    // reconstruían con innerHTML en cada apertura, lo que también
+    // destruía y recreaba sus listeners; con un pie fijo, volver a añadir
+    // un listener en cada apertura los habría ido acumulando).
+    document.getElementById("formCancelBtn").addEventListener("click", function () {
+      closeOverlay("formOverlay");
+    });
+    document.getElementById("formSaveBtn").addEventListener("click", function () {
+      saveForm();
+    });
     document.getElementById("confirmCancelBtn").addEventListener("click", function () {
       closeOverlay("confirmOverlay");
     });
@@ -1766,6 +1918,13 @@
 
     window.addEventListener("resize", function () {
       requestAnimationFrame(drawArrows);
+      // Si al girar el móvil cambia si el detalle debe ir en modal o en
+      // panel (ver isNarrowViewport), que se note de inmediato sobre la
+      // selección actual, en vez de quedarse en un panel que el CSS acaba
+      // de ocultar hasta la próxima vez que el usuario seleccione algo.
+      if (selectedKey) {
+        renderDetail();
+      }
     });
   });
 })();

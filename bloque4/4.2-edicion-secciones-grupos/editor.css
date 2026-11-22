@@ -263,6 +263,13 @@
   border-radius: 10px;
   cursor: pointer;
   user-select: none;
+  /* Carril lateral reservado para conectores rodeados (P22/M10/M15): al
+     ser un margen (no un ancho fijo), cada tarjeta se encoge sola y deja
+     siempre libre esta franja a su derecha, en toda la columna, sin tener
+     que calcular ningún ancho a mano. Ahí es donde routeAround() traza el
+     tramo vertical que evita atravesar un bloque intermedio tras
+     reordenar — nunca encima de ninguna tarjeta. */
+  margin-right: 44px;
 }
 
 .node-group {
@@ -562,7 +569,15 @@
   width: 100%;
   max-width: 420px;
   max-height: 85vh;
-  overflow-y: auto;
+  /* Antes el scroll (overflow-y:auto) estaba en .modal como un único
+     bloque con la cabecera y el pie dentro: en un formulario largo, los
+     botones Guardar/Cancelar se desplazaban fuera de la vista junto con
+     el resto (M12 — "mantener visibles y accesibles los botones"). Ahora
+     .modal es una columna flex de altura máxima fija; cabecera y pie no
+     se encogen y solo .modal-body, en medio, hace scroll interno. */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .modal-header {
@@ -570,6 +585,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 18px 20px 4px;
+  flex-shrink: 0;
 }
 
 .modal-header h2 {
@@ -588,14 +604,18 @@
 
 .modal-body {
   padding: 8px 20px 16px;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  padding: 0 20px 18px;
+  padding: 12px 20px 18px;
   flex-wrap: wrap;
+  flex-shrink: 0;
+  border-top: 1px solid var(--color-border);
 }
 
 /* ---------- Lista de entrenamientos (página de entrada simulada) ---------- */
@@ -780,8 +800,17 @@
   background: #b91c1c;
 }
 
-/* ---------- Responsive (móvil): hereda el breakpoint ya aprobado en 4.1 ---------- */
-@media (max-width: 760px) {
+/*
+ * Responsive (móvil): hereda el breakpoint ya aprobado en 4.1, ampliado
+ * con la misma segunda condición que useIsNarrowViewport(760) en el
+ * bloque 4.1 real (ver comentario detallado en shared.css, junto al
+ * breakpoint del menú). Causa real de M11/M12: un móvil apaisado
+ * (ej. 844x390) puede superar 760px de ancho sin dejar de ser un
+ * teléfono — antes solo se detectaba por ancho, así que conservaba el
+ * panel de detalle de escritorio y el menú lateral en vez de cambiar a
+ * modal/hamburguesa.
+ */
+@media (max-width: 760px), (max-height: 500px) and (pointer: coarse) {
   .editor-main {
     flex-direction: column;
     align-items: stretch;
@@ -816,5 +845,56 @@
     width: 100%;
     border-radius: var(--radius) var(--radius) 0 0;
     max-height: 80vh;
+  }
+}
+
+/*
+ * Apaisado real (viewport ya de por sí bajo, no solo un móvil vertical
+ * estrecho): el lienzo puede aprovechar mucha más altura, así que se
+ * recorta el resto de la cabecera (opciones de visualización, barra de
+ * herramientas, pie "Arrastra para desplazar…") para que el diagrama
+ * empiece lo antes posible — misma idea que la corrección equivalente ya
+ * aprobada en React 4.1 (app.css).
+ */
+@media (max-height: 500px) and (pointer: coarse) {
+  .editor-header {
+    margin-bottom: 4px;
+  }
+
+  .editor-header-title h1 {
+    font-size: 1.05rem;
+  }
+
+  .compare-panel {
+    padding: 6px 10px;
+    margin-bottom: 6px;
+  }
+
+  .compare-panel h2 {
+    display: none;
+  }
+
+  .compare-row {
+    gap: 10px;
+  }
+
+  .editor-toolbar {
+    margin-bottom: 4px;
+  }
+
+  .canvas-viewport {
+    height: 72vh;
+  }
+
+  .canvas-hint {
+    display: none;
+  }
+
+  .modal {
+    max-height: 94vh;
+  }
+
+  .section-lane {
+    width: 86vw;
   }
 }
