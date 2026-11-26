@@ -552,16 +552,22 @@
   justify-content: center;
   padding: 16px;
   z-index: 50;
-  /* Corrección Android: con align-items distinto de "center" (p. ej.
-     flex-end en móvil, más abajo), un overlay con overflow puede dejar
-     scrollear hasta la parte del modal que no entra en el viewport. Sin
-     esto, si el modal real medía más que el alto visible (típico en
-     horizontal, donde "vh" en Chrome Android puede sobrestimar el alto
-     disponible justo tras girar, mientras la barra de direcciones todavía
-     ocupa espacio), su cabecera quedaba físicamente por encima de y=0 sin
-     ninguna forma de alcanzarla: no era un fallo de la cabecera en sí, sino
-     de que el contenedor que la alojaba no permitía desplazarse hasta ella. */
+  /* Segunda corrección Android (pruebas físicas reales, R02/R04/R06): la
+     primera corrección confiaba en poder DESPLAZAR el overlay hasta
+     alcanzar la parte del modal que no entraba en el viewport; en el
+     dispositivo real eso no bastó. Ahora el overlay se fija al alto
+     EXACTO y realmente visible (--app-vvh, actualizado en vivo desde
+     app.js con window.visualViewport), en vez de a "vh", que en Chrome
+     Android puede no reflejar de inmediato el alto disponible justo tras
+     girar. Como .modal (más abajo) nunca puede medir más que esto, su
+     cabecera y su pie caen siempre dentro de lo visible sin necesitar
+     desplazamiento alguno. overflow-y:auto se conserva solo como red de
+     seguridad para el caso (ya improbable) de que ninguna de las dos
+     reservas de abajo esté disponible. */
   overflow-y: auto;
+  height: 100vh;
+  height: 100dvh;
+  height: var(--app-vvh, 100dvh);
 }
 
 .modal-overlay.open {
@@ -578,7 +584,6 @@
   box-shadow: var(--shadow);
   width: 100%;
   max-width: 420px;
-  max-height: 85vh;
   /* Antes el scroll (overflow-y:auto) estaba en .modal como un único
      bloque con la cabecera y el pie dentro: en un formulario largo, los
      botones Guardar/Cancelar se desplazaban fuera de la vista junto con
@@ -588,6 +593,16 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* Segunda corrección Android: el límite real es el alto EXACTO y
+     realmente visible (--app-vvh), menos los 32px del padding vertical de
+     .modal-overlay (16px arriba + 16px abajo) — así el modal, cabecera y
+     pie incluidos, nunca puede sobrepasar el espacio que de verdad hay,
+     en vez de depender de poder desplazarse después para alcanzarlo.
+     85vh/85dvh quedan como reserva en cascada si --app-vvh no llega a
+     existir (JS deshabilitado o visualViewport no disponible). */
+  max-height: 85vh;
+  max-height: 85dvh;
+  max-height: calc(var(--app-vvh, 85dvh) - 32px);
 }
 
 .modal-header {
@@ -633,11 +648,16 @@
   justify-content: flex-end;
   gap: 8px;
   padding: 12px 20px 18px;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
   flex-wrap: wrap;
   flex-shrink: 0;
   border-top: 1px solid var(--color-border);
   /* Corrección Android: mismo motivo que .modal-header — Guardar/Cancelar/
-     Cerrar siempre alcanzables aunque el formulario sea largo. */
+     Cerrar siempre alcanzables aunque el formulario sea largo. El margen
+     inferior de seguridad (env(safe-area-inset-bottom)) solo aporta algo si
+     este prototipo se abriera instalado a pantalla completa en un móvil con
+     zona segura inferior; en una pestaña normal de Chrome vale 0px y no
+     cambia nada. */
   position: sticky;
   bottom: 0;
   background: var(--color-surface);
@@ -872,7 +892,13 @@
     max-width: none;
     width: 100%;
     border-radius: var(--radius) var(--radius) 0 0;
+    /* Sin padding en el overlay aquí: solo se reserva un margen fijo de
+       16px arriba, para que la "hoja" inferior nunca toque el borde
+       superior del todo, sin depender de ningún porcentaje que en un
+       móvil muy bajo en horizontal se quedaría en unos pocos píxeles. */
     max-height: 80vh;
+    max-height: 80dvh;
+    max-height: calc(var(--app-vvh, 80dvh) - 16px);
   }
 }
 
@@ -919,7 +945,12 @@
   }
 
   .modal {
+    /* Viewport ya muy limitado: solo un margen mínimo de seguridad (8px),
+       nunca un porcentaje, para no perder los pocos píxeles de más que
+       aquí sí importan. */
     max-height: 94vh;
+    max-height: 94dvh;
+    max-height: calc(var(--app-vvh, 94dvh) - 8px);
   }
 
   .section-lane {

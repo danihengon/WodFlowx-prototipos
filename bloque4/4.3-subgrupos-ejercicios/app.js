@@ -42,6 +42,17 @@
  * backend real: los extremos se identifican por FlowElement, no por
  * posición), así que las funciones de mover de este archivo no necesitan
  * ningún cambio para esa parte de la revisión.
+ *
+ * Segunda corrección Android (pruebas físicas reales: cabecera/X del modal
+ * inaccesible en horizontal, R02/R04/R06): la primera corrección (overlay
+ * con overflow-y:auto + cabecera/pie "sticky") partía de que bastaba con
+ * poder desplazar el overlay hasta la parte del modal que no entrase en el
+ * viewport. En el dispositivo real eso no funcionó de forma fiable. La
+ * solución ahora no depende de poder desplazar nada para ALCANZAR la
+ * cabecera: el modal nunca puede medir más que el alto realmente visible,
+ * así que su cabecera y su pie (sticky) siempre caen dentro de ese alto sin
+ * necesidad de desplazamiento alguno del overlay. Ver
+ * updateViewportHeightVar() más abajo.
  */
 
 (function () {
@@ -1341,6 +1352,38 @@
     renderDetail();
   }
 
+  // ---------- Alto real del viewport visible (Android: barra de Chrome y teclado) ----------
+  // 100vh en Chrome Android se basa en el viewport "grande" (como si la
+  // barra de direcciones estuviera siempre oculta) y, en el dispositivo real
+  // de la prueba, no se reajustaba de forma fiable justo al girar. 100dvh ya
+  // se ajusta, pero su soporte para el teclado en pantalla varía según
+  // versión de Chrome. window.visualViewport.height es el único valor que
+  // refleja de inmediato el alto EXACTO y realmente visible en los tres
+  // casos a la vez (barra de Chrome visible/oculta, giro y teclado), así que
+  // se expone como variable CSS (--app-vvh) que el propio CSS usa para que
+  // .modal-overlay y .modal nunca puedan medir más que eso. 100dvh y 100vh
+  // quedan como reserva en cascada para navegadores sin soporte de
+  // visualViewport (ver .modal-overlay/.modal en editor.css: cada
+  // declaración de altura repite la propiedad tres veces, de la más
+  // compatible a la más exacta, y gana la última que el navegador entienda).
+  function updateViewportHeightVar() {
+    var vv = window.visualViewport;
+    var h = vv ? vv.height : window.innerHeight;
+    document.documentElement.style.setProperty("--app-vvh", h + "px");
+  }
+  updateViewportHeightVar();
+  if (window.visualViewport) {
+    // "resize" cubre giro, aparición/ocultación de la barra de Chrome y
+    // apertura/cierre del teclado; "scroll" cubre el desplazamiento del
+    // visualViewport que el propio teclado produce en algunas versiones
+    // sin disparar necesariamente "resize".
+    window.visualViewport.addEventListener("resize", updateViewportHeightVar);
+    window.visualViewport.addEventListener("scroll", updateViewportHeightVar);
+  } else {
+    window.addEventListener("resize", updateViewportHeightVar);
+    window.addEventListener("orientationchange", updateViewportHeightVar);
+  }
+
   // ---------- Overlays (modal de detalle, formulario, confirmación) ----------
   function openOverlay(id, focusId) {
     var overlay = document.getElementById(id);
@@ -1349,6 +1392,10 @@
     }
     lastFocusedBeforeModal = document.activeElement;
     overlay.classList.add("open");
+    // Siempre se abre mostrando su propia parte superior: si una apertura
+    // anterior dejó el overlay desplazado (red de seguridad de
+    // overflow-y:auto en editor.css), que no se note en la siguiente.
+    overlay.scrollTop = 0;
     var toFocus = focusId ? document.getElementById(focusId) : overlay.querySelector("button, input, textarea");
     if (toFocus) {
       toFocus.focus();
