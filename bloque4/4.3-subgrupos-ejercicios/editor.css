@@ -552,6 +552,16 @@
   justify-content: center;
   padding: 16px;
   z-index: 50;
+  /* Corrección Android: con align-items distinto de "center" (p. ej.
+     flex-end en móvil, más abajo), un overlay con overflow puede dejar
+     scrollear hasta la parte del modal que no entra en el viewport. Sin
+     esto, si el modal real medía más que el alto visible (típico en
+     horizontal, donde "vh" en Chrome Android puede sobrestimar el alto
+     disponible justo tras girar, mientras la barra de direcciones todavía
+     ocupa espacio), su cabecera quedaba físicamente por encima de y=0 sin
+     ninguna forma de alcanzarla: no era un fallo de la cabecera en sí, sino
+     de que el contenedor que la alojaba no permitía desplazarse hasta ella. */
+  overflow-y: auto;
 }
 
 .modal-overlay.open {
@@ -586,6 +596,16 @@
   align-items: center;
   padding: 18px 20px 4px;
   flex-shrink: 0;
+  /* Corrección Android: fijada dentro del propio scroll de .modal (no solo
+     de .modal-body), para que la X siga visible mientras se desplaza un
+     formulario largo, sin depender de que el overlay exterior esté en la
+     posición exacta — "cinturón y tirantes" junto al overflow-y del
+     overlay, para que nunca quede inaccesible por ninguna de las dos
+     causas por separado. */
+  position: sticky;
+  top: 0;
+  background: var(--color-surface);
+  z-index: 1;
 }
 
 .modal-header h2 {
@@ -616,6 +636,12 @@
   flex-wrap: wrap;
   flex-shrink: 0;
   border-top: 1px solid var(--color-border);
+  /* Corrección Android: mismo motivo que .modal-header — Guardar/Cancelar/
+     Cerrar siempre alcanzables aunque el formulario sea largo. */
+  position: sticky;
+  bottom: 0;
+  background: var(--color-surface);
+  z-index: 1;
 }
 
 /* ---------- Lista de entrenamientos (página de entrada simulada) ---------- */

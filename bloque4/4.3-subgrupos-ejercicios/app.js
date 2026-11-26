@@ -33,6 +33,15 @@
  *  - No existe "mover un subgrupo o un ejercicio a otro grupo padre": el
  *    backend real no expone ese endpoint (ver limitaciones en el informe);
  *    por eso este prototipo solo ofrece Subir/Bajar dentro del mismo padre.
+ *
+ * Revisión de corrección Android (incidencia de apertura involuntaria del
+ * detalle al girar el dispositivo): causa real confirmada leyendo el propio
+ * código, no supuesta — ver dismissDetail() más abajo para la explicación
+ * completa. Reordenar ejercicios/subgrupos NUNCA bloquea ni reescribe
+ * ninguna transición existente (fiel a TransitionService.DEC-048 del
+ * backend real: los extremos se identifican por FlowElement, no por
+ * posición), así que las funciones de mover de este archivo no necesitan
+ * ningún cambio para esa parte de la revisión.
  */
 
 (function () {
@@ -1364,6 +1373,25 @@
     closeOverlay("modalOverlay");
   }
 
+  // Causa real de la apertura involuntaria del detalle al girar el móvil:
+  // cerrar el modal (closeModal) nunca vaciaba selectedKey. El listener de
+  // "resize" (más abajo) vuelve a llamar a renderDetail() en cada cambio de
+  // orientación mientras selectedKey siga apuntando a algo — y, en móvil,
+  // renderDetail() en modo "modal" reabre el overlay con openModal() si hay
+  // html que mostrar. Como closeModal() no tocaba selectedKey, cualquier
+  // giro posterior a haber cerrado un detalle lo reabría solo, sin ningún
+  // toque intencionado. dismissDetail() es el único cierre que cuenta como
+  // "deseleccionar" (botón ✕, clic fuera del modal, Escape): por eso vacía
+  // selectedKey, a diferencia de closeModal(), que renderDetail() también
+  // usa en modo panel como simple medida de seguridad en cada repintado y
+  // que por tanto NO debe vaciar la selección (si lo hiciera, el panel
+  // lateral de escritorio perdería su elemento resaltado en cada mutación).
+  function dismissDetail() {
+    selectedKey = null;
+    applySelectionHighlight();
+    closeModal();
+  }
+
   // ---------- Diagrama ----------
   function hasOutgoingTransition(flowElementId) {
     return TREE.transitions.some(function (t) {
@@ -2293,10 +2321,10 @@
 
   // ---------- Overlays: cierre con Escape, clic fuera y botones ✕ ----------
   function wireOverlays() {
-    document.getElementById("modalCloseBtn").addEventListener("click", closeModal);
+    document.getElementById("modalCloseBtn").addEventListener("click", dismissDetail);
     document.getElementById("modalOverlay").addEventListener("click", function (ev) {
       if (ev.target === ev.currentTarget) {
-        closeModal();
+        dismissDetail();
       }
     });
     document.getElementById("formCloseBtn").addEventListener("click", function () {
@@ -2338,7 +2366,7 @@
       } else if (document.getElementById("formOverlay").classList.contains("open")) {
         closeOverlay("formOverlay");
       } else {
-        closeModal();
+        dismissDetail();
       }
     });
   }
