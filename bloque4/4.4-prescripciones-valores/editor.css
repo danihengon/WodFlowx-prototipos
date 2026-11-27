@@ -324,6 +324,20 @@
   white-space: nowrap;
 }
 
+/* Nombres de grupo/subgrupo: dos líneas en vez de una sola truncada con
+   puntos suspensivos. En una pantalla estrecha, el ancho disponible para
+   el nombre ya es pequeño (el margen de sangría por profundidad, el botón
+   de expandir y la etiqueta "Bloque"/"Subbloque" lo reducen más en cada
+   nivel anidado) — permitir una segunda línea deja ver bastante más del
+   nombre sin necesitar un ancho de nodo distinto por profundidad. */
+.node-group-header .node-name {
+  white-space: normal;
+  text-overflow: clip;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
 .node-children {
   margin-top: 6px;
   padding-left: 8px;
@@ -342,6 +356,30 @@
   padding: 7px 10px;
   margin-bottom: 6px;
   margin-left: 2px;
+  /*
+   * Hallazgo real (confirmado con getBoundingClientRect, no presupuesto):
+   * antes nombre y resumen compartían una única fila flex. El nombre tenía
+   * "flex: 1; min-width: 0" (puede encogerse hasta 0px), pero el resumen
+   * no tenía ningún límite de encogimiento ni min-width:0 — con una sola
+   * línea sin salto (white-space: nowrap), su anchura mínima es la de todo
+   * el texto. Con los resúmenes cortos del bloque 4.3 ("15 repeticiones")
+   * nunca se notaba; con varios valores reales concatenados del bloque 4.4
+   * ("Repeticiones: 5 reps · Peso / carga: 60–65 kg"), el resumen
+   * reclamaba todo el espacio disponible y el nombre del ejercicio podía
+   * quedar en 0px de ancho — invisible, no solo "demasiado truncado".
+   * Mismo mecanismo en .hlist-row-exercise, más abajo. Corrección: nombre
+   * y resumen pasan a ser bloques independientes, cada uno con todo el
+   * ancho del nodo disponible, en vez de competir por una sola línea. El
+   * zoom (transform: scale() sobre #canvasWorld) nunca cambiaba esta
+   * relación de ancho — por eso el problema se veía igual a cualquier
+   * nivel de zoom, incluido "Ver todo".
+   */
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.node-exercise-header {
   display: flex;
   align-items: baseline;
   gap: 8px;
@@ -355,7 +393,17 @@
 .node-exercise-summary {
   font-size: 0.78rem;
   color: var(--color-text-muted);
-  white-space: nowrap;
+  /* Varias líneas en vez de una sola interminable, ajustado al ancho real
+     del nodo. Límite defensivo de 3 líneas: con las cinco magnitudes del
+     dominio nunca debería hacer falta más, pero evita que un nodo crezca
+     sin límite si en el futuro una prescripción llegara a tener muchos
+     valores. */
+  white-space: normal;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 }
 
 .arrow-label {
@@ -438,6 +486,34 @@
   font-size: 0.76rem;
   color: var(--color-text-muted);
   flex-shrink: 0;
+}
+
+/* Fila de ejercicio en Vista Lista: mismo hallazgo que .node-exercise
+   (arriba) — "flex-shrink: 0" en .hlist-summary nunca dejaba que el
+   resumen se encogiera, así que con un resumen largo (varios valores
+   reales del bloque 4.4) el nombre del ejercicio (flex:1, min-width:0)
+   podía quedar en 0px de ancho. Se apila: cabecera (toggle + etiqueta +
+   nombre) en su propia fila, resumen debajo en bloque aparte, con todo el
+   ancho de la fila disponible para ajustarse en varias líneas si hace
+   falta. */
+.hlist-row-exercise {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+
+.hlist-row-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hlist-row-exercise .hlist-summary {
+  flex-shrink: 1;
+  white-space: normal;
+  overflow-wrap: break-word;
+  margin-left: 24px;
 }
 
 .hlist-toggle {

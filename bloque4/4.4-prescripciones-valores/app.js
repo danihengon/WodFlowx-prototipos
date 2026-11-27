@@ -1795,10 +1795,17 @@
     el.tabIndex = 0;
     el.setAttribute("role", "button");
     el.setAttribute("aria-label", "Ejercicio: " + e.exerciseName + ", " + (prescriptionSummaryText(e) || ""));
+    // El nombre y el resumen van en bloques independientes (no en la misma
+    // fila): con varios valores reales (bloque 4.4) el resumen puede ser
+    // largo, y compartir una sola fila con "flex:1" en el nombre lo dejaba
+    // encogerse hasta 0px de ancho (desaparecido) para cederle sitio al
+    // resumen, que nunca se encogía por debajo de su propio ancho de texto
+    // completo (confirmado con getBoundingClientRect, no solo visualmente).
     el.innerHTML =
-      '<span class="node-kind-label">Ejercicio</span><span class="node-name">' +
+      '<div class="node-exercise-header"><span class="node-kind-label">Ejercicio</span><span class="node-name">' +
       esc(e.exerciseName) +
-      '</span><span class="node-exercise-summary">' +
+      "</span></div>" +
+      '<span class="node-exercise-summary">' +
       esc(prescriptionSummaryText(e) || "") +
       "</span>";
     el.addEventListener("click", function (ev) {
@@ -2263,14 +2270,18 @@
   function buildListExerciseRow(e, container) {
     var key = exKeyOf(e);
     var row = document.createElement("div");
-    row.className = "hlist-row";
+    // Mismo motivo que buildExerciseEl: el resumen ya no comparte fila con
+    // el nombre (antes "flex-shrink: 0" en .hlist-summary lo dejaba
+    // intacto y encogía el nombre hasta desaparecer).
+    row.className = "hlist-row hlist-row-exercise";
     row.dataset.key = key;
     row.setAttribute("tabindex", "0");
     row.setAttribute("role", "button");
     row.innerHTML =
-      '<span class="hlist-toggle"></span><span class="node-kind-label">Ejercicio</span><span class="hlist-name">' +
+      '<div class="hlist-row-header"><span class="hlist-toggle"></span><span class="node-kind-label">Ejercicio</span><span class="hlist-name">' +
       esc(e.exerciseName) +
-      '</span><span class="hlist-summary">' +
+      "</span></div>" +
+      '<span class="hlist-summary">' +
       esc(prescriptionSummaryText(e) || "") +
       "</span>";
     row.addEventListener("click", function () {
