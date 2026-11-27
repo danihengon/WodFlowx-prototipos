@@ -277,6 +277,12 @@
   border: 1px solid var(--color-border);
   padding: 8px 10px;
   margin-bottom: 8px;
+  /* Suelo defensivo: el mecanismo principal contra el estrechamiento
+     progresivo por anidamiento es que app.js amplía el carril de la
+     sección lo necesario (ver EXTRA_LANE_WIDTH_PER_DEPTH); esto es solo
+     una red de seguridad para que ningún subgrupo quede nunca por debajo
+     de un ancho legible, aunque ese cálculo se quedara corto. */
+  min-width: 210px;
 }
 
 .node-group.depth-1 { border-left: 4px solid var(--color-primary); }
@@ -377,6 +383,8 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  /* Mismo suelo defensivo que .node-group, ver arriba. */
+  min-width: 190px;
 }
 
 .node-exercise-header {
@@ -393,13 +401,28 @@
 .node-exercise-summary {
   font-size: 0.78rem;
   color: var(--color-text-muted);
-  /* Varias líneas en vez de una sola interminable, ajustado al ancho real
-     del nodo. Límite defensivo de 3 líneas: con las cinco magnitudes del
-     dominio nunca debería hacer falta más, pero evita que un nodo crezca
-     sin límite si en el futuro una prescripción llegara a tener muchos
-     valores. */
+  /*
+   * Varias líneas en vez de una sola interminable, ajustado al ancho real
+   * del nodo. Límite defensivo de 3 líneas: con las cinco magnitudes del
+   * dominio nunca debería hacer falta más, pero evita que un nodo crezca
+   * sin límite si en el futuro una prescripción llegara a tener muchos
+   * valores.
+   *
+   * "overflow-wrap: normal" a propósito (no "break-word"): con el ancho
+   * mínimo garantizado en .node-exercise/.node-group y la ampliación del
+   * carril por profundidad (ver EXTRA_LANE_WIDTH_PER_DEPTH en app.js), el
+   * ajuste de línea normal en espacios ya es suficiente — "break-word"
+   * partía palabras letra a letra en los niveles más anidados cuando el
+   * nodo aún no tenía ancho garantizado (incidencia real, confirmada con
+   * offsetWidth: a 109px de ancho, "Repeticiones:" no cabía entera).
+   * Ahora, si una palabra suelta excepcionalmente larga no cupiera ni con
+   * el ancho mínimo garantizado, se recorta igual que el resto gracias al
+   * límite de 3 líneas (overflow: hidden) en vez de partirse en sílabas o
+   * desbordar el nodo.
+   */
   white-space: normal;
-  overflow-wrap: break-word;
+  overflow-wrap: normal;
+  word-break: normal;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
@@ -512,8 +535,15 @@
 .hlist-row-exercise .hlist-summary {
   flex-shrink: 1;
   white-space: normal;
-  overflow-wrap: break-word;
+  /* overflow-wrap: normal (no "break-word") — mismo motivo que
+     .node-exercise-summary en el diagrama. */
+  overflow-wrap: normal;
+  word-break: normal;
   margin-left: 24px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 }
 
 .hlist-toggle {

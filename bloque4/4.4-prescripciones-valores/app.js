@@ -1911,6 +1911,34 @@
     return el;
   }
 
+  /*
+   * Ancho extra por nivel de anidamiento (nuevo: corrige el estrechamiento
+   * progresivo de subgrupos/ejercicios anidados). Medido con offsetWidth
+   * (independiente del zoom: transform: scale() nunca cambia el layout,
+   * solo el pintado) contra el escenario C real: cada nivel adicional de
+   * subgrupo le resta a sus descendientes unos 90px reales (el padding
+   * propio del nodo + la sangría del nivel + el padding de .node-children),
+   * y eso se acumula sin límite con la profundidad. Con 1-2 niveles el
+   * ancho del carril ya definido en editor.css es cómodo; a partir de ahí,
+   * en vez de dejar que cada nivel adicional siga restando hasta dejar los
+   * ejercicios ilegibles (o partir palabras para compensar), el carril de
+   * la sección crece lo necesario para compensarlo — nunca se impone un
+   * límite artificial de profundidad, el entrenador puede desplazar el
+   * lienzo horizontalmente si hace falta.
+   */
+  var EXTRA_LANE_WIDTH_PER_DEPTH = 90;
+  var LANE_COMFORTABLE_DEPTH = 2;
+
+  function maxGroupDepth(g, depth) {
+    var max = depth;
+    g.content.forEach(function (ci) {
+      if (ci.kind === "group") {
+        max = Math.max(max, maxGroupDepth(ci.item, depth + 1));
+      }
+    });
+    return max;
+  }
+
   function renderDiagram() {
     var treeRoot = document.getElementById("canvasTree");
     treeRoot.innerHTML = "";
@@ -1925,6 +1953,12 @@
         var lane = document.createElement("div");
         lane.className = "section-lane";
         lane.dataset.key = sectionKeyOf(s);
+
+        var sectionMaxDepth = 0;
+        s.groups.forEach(function (mg) {
+          sectionMaxDepth = Math.max(sectionMaxDepth, maxGroupDepth(mg.group, 1));
+        });
+        lane.dataset.extraLevels = String(Math.max(0, sectionMaxDepth - LANE_COMFORTABLE_DEPTH));
 
         var header = document.createElement("div");
         header.className = "section-lane-header";
@@ -1969,6 +2003,26 @@
 
         treeRoot.appendChild(lane);
       });
+
+    // Segunda pasada, ya con los carriles insertados en el DOM (su ancho
+    // CSS real por breakpoint — escritorio/móvil/apaisado corto — ya
+    // resuelto): se suma el ancho extra por profundidad a ESE ancho, en
+    // vez de duplicar aquí los valores de cada breakpoint de editor.css.
+    // min-width siempre gana sobre width cuando es mayor (ver editor.css):
+    // una sección poco anidada conserva el ancho normal sin cambios.
+    document.querySelectorAll(".section-lane").forEach(function (laneEl) {
+      var extraLevels = Number(laneEl.dataset.extraLevels || 0);
+      if (extraLevels > 0) {
+        // offsetWidth, no getBoundingClientRect: #canvasWorld puede llevar
+        // ya aplicado transform: scale() (zoom) de una interacción previa,
+        // y min-width se expresa en el espacio de layout sin escalar —
+        // getBoundingClientRect devuelve el tamaño ya pintado (con zoom
+        // aplicado), que mezclado con un incremento sin escalar daría un
+        // resultado incorrecto.
+        var currentWidth = laneEl.offsetWidth;
+        laneEl.style.minWidth = Math.round(currentWidth + extraLevels * EXTRA_LANE_WIDTH_PER_DEPTH) + "px";
+      }
+    });
 
     applySelectionHighlight();
     requestAnimationFrame(drawArrows);
